@@ -1,0 +1,78 @@
+<Window x:Class="NexOrderDesk.Views.CropWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Crop picture" Width="960" Height="680" MinWidth="680" MinHeight="480" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner" Background="#F4F5F7" FontFamily="Segoe UI" UseLayoutRounding="True">
+  <Window.Resources>
+    <Style x:Key="DlgButton" TargetType="Button">
+      <Setter Property="Height" Value="30"/><Setter Property="Padding" Value="12,0"/><Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="#1E1E1E"/><Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Background" Value="White"/><Setter Property="Margin" Value="0,0,6,0"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Bd" CornerRadius="7" Background="{TemplateBinding Background}" BorderBrush="#D9DCE1" BorderThickness="1" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="#9AA0A9"/></Trigger></ControlTemplate.Triggers>
+        </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key="RatioButton" TargetType="RadioButton">
+      <Setter Property="Cursor" Value="Hand"/><Setter Property="FontSize" Value="11.5"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Margin" Value="0,0,4,0"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Border x:Name="Bd" CornerRadius="7" Background="White" BorderBrush="#D9DCE1" BorderThickness="1" Padding="10,5">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="#9AA0A9"/></Trigger>
+            <Trigger Property="IsChecked" Value="True"><Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBrush}"/><Setter TargetName="Bd" Property="BorderBrush" Value="#1E1E1E"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate></Setter.Value></Setter>
+    </Style>
+  </Window.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+
+    <!-- tools -->
+    <DockPanel Margin="14,10,14,8">
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+        <TextBlock Text="ZOOM" FontSize="10" FontWeight="Bold" Foreground="#6B7280" VerticalAlignment="Center" Margin="0,0,6,0"/>
+        <Button Style="{StaticResource DlgButton}" Content="&#x2212;" Width="30" Padding="0" Click="OnZoomOut" ToolTip="Zoom out (mouse wheel)"/>
+        <Slider x:Name="ZoomSlider" Width="150" Minimum="0.05" Maximum="8" VerticalAlignment="Center" ValueChanged="OnZoomSlider" Margin="0,0,6,0"/>
+        <Button Style="{StaticResource DlgButton}" Content="+" Width="30" Padding="0" Click="OnZoomIn" ToolTip="Zoom in (mouse wheel)"/>
+        <Button Style="{StaticResource DlgButton}" Content="Fit" Click="OnFit" ToolTip="Show the whole picture"/>
+        <Button Style="{StaticResource DlgButton}" Content="100%" Click="OnActual" ToolTip="Actual size"/>
+      </StackPanel>
+      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <TextBlock Text="SHAPE" FontSize="10" FontWeight="Bold" Foreground="#6B7280" VerticalAlignment="Center" Margin="0,0,6,0"/>
+        <RadioButton x:Name="RFree" Style="{StaticResource RatioButton}" GroupName="R" Content="Free" Tag="0" Checked="OnRatio" IsChecked="True"/>
+        <RadioButton Style="{StaticResource RatioButton}" GroupName="R" Content="Original" Tag="orig" Checked="OnRatio"/>
+        <RadioButton Style="{StaticResource RatioButton}" GroupName="R" Content="1:1" Tag="1" Checked="OnRatio"/>
+        <RadioButton Style="{StaticResource RatioButton}" GroupName="R" Content="4:3" Tag="1.3333" Checked="OnRatio"/>
+        <RadioButton Style="{StaticResource RatioButton}" GroupName="R" Content="3:4" Tag="0.75" Checked="OnRatio"/>
+        <RadioButton Style="{StaticResource RatioButton}" GroupName="R" Content="16:9" Tag="1.7778" Checked="OnRatio"/>
+      </StackPanel>
+    </DockPanel>
+
+    <!-- picture + crop box -->
+    <Border Grid.Row="1" Margin="14,0" CornerRadius="8" Background="#2B2D31" ClipToBounds="True">
+      <Canvas x:Name="Stage" Background="Transparent" ClipToBounds="True" Focusable="True"
+              MouseLeftButtonDown="OnDown" MouseMove="OnMove" MouseLeftButtonUp="OnUp" MouseWheel="OnWheel" SizeChanged="OnStageSize">
+        <Image x:Name="Pic" RenderOptions.BitmapScalingMode="HighQuality" IsHitTestVisible="False"/>
+        <!-- dim everything outside the crop box -->
+        <Path x:Name="Shade" Fill="#99000000" IsHitTestVisible="False"/>
+        <Rectangle x:Name="Box" Stroke="White" StrokeThickness="1.5" Fill="Transparent" Cursor="SizeAll"/>
+        <Path x:Name="Thirds" Stroke="#99FFFFFF" StrokeThickness="0.8" IsHitTestVisible="False"/>
+      </Canvas>
+    </Border>
+
+    <DockPanel Grid.Row="2" Margin="14,10,14,14">
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+        <Button Style="{StaticResource DlgButton}" Content="Restore original" Click="OnRestore" ToolTip="Show the whole original picture again (nothing is lost)"/>
+        <Button Style="{StaticResource DlgButton}" Content="Cancel" IsCancel="True" Click="OnCancel"/>
+        <Button Style="{StaticResource DlgButton}" Content="&#x2714;  Apply crop" Background="{DynamicResource AccentBrush}" IsDefault="True" Click="OnApply" Margin="0"/>
+      </StackPanel>
+      <TextBlock x:Name="InfoText" VerticalAlignment="Center" FontSize="11" Foreground="#6B7280" TextTrimming="CharacterEllipsis"
+                 Text="Drag inside the box to move it, drag the edges / corners to resize. Drag outside the box (or the mouse wheel) to move / zoom the picture."/>
+    </DockPanel>
+  </Grid>
+</Window>

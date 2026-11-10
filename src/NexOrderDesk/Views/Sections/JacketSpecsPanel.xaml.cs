@@ -1,0 +1,18 @@
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Threading;
+using NexOrderDesk.Services;
+namespace NexOrderDesk.Views.Sections;
+
+public partial class JacketSpecsPanel : UserControl
+{
+    public JacketSpecsPanel() { InitializeComponent(); }
+
+    private void OnManagePockets(object sender, RoutedEventArgs e)
+    {
+        JPocketToggle.IsChecked = false;
+        Dispatcher.BeginInvoke(new Action(() => OptionsManager.Show("jacketpockets")), DispatcherPriority.Background);
+    }
+
+    private void OnManageExtras(object sender, RoutedEventArgs e) => OptionsManager.Show("jacketextras");
+}

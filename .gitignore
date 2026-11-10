@@ -1,0 +1,12 @@
+bin/
+obj/
+release/
+installer/payload/
+*.user
+.vs/
+build_log.txt
+build_errors.txt
+msi_log.txt
+msi_errors.txt
+publish/
+publish_log.txt

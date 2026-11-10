@@ -1,0 +1,56 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <!-- NEX ORDER DESK installer (WiX 5). Installs one file (NexOrderDesk.exe) + Start menu and desktop shortcuts.
+       UpgradeCode never changes: installing a newer version replaces the old one automatically. -->
+  <Package Name="NEX ORDER DESK" Manufacturer="Promotees Group" Version="$(var.ProductVersion)" Language="1033"
+           UpgradeCode="7F3C2A51-9B64-4E2D-8C1A-5D0E3B7A9C42" Scope="perMachine">
+
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <!-- icon in "Apps & features" and on the shortcuts -->
+    <Icon Id="AppIcon.ico" SourceFile="$(sys.SOURCEFILEDIR)..\src\NexOrderDesk\Assets\app.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
+
+    <!-- remember the install folder so every later version (setup, MSI or in-app update) installs to the same place -->
+    <Property Id="INSTALLFOLDER">
+      <RegistrySearch Id="RememberInstallFolder" Root="HKLM" Key="Software\Promotees\NexOrderDesk" Name="InstallFolder" Type="raw" Bitness="always64" />
+    </Property>
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="NEX ORDER DESK">
+        <Component Id="MainExe">
+          <File Id="NexOrderDeskExe" Source="$(sys.SOURCEFILEDIR)payload\NexOrderDesk.exe" KeyPath="yes" />
+          <RegistryValue Root="HKLM" Key="Software\Promotees\NexOrderDesk" Name="InstallFolder" Type="string" Value="[INSTALLFOLDER]" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Component Id="StartMenuShortcut">
+        <Shortcut Id="StartShortcut" Name="NEX ORDER DESK" Description="Order specification sheets"
+                  Target="[#NexOrderDeskExe]" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon.ico" />
+        <RegistryValue Root="HKCU" Key="Software\Promotees\NexOrderDesk" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <StandardDirectory Id="DesktopFolder">
+      <Component Id="DesktopShortcut">
+        <Shortcut Id="DeskShortcut" Name="NEX ORDER DESK" Description="Order specification sheets"
+                  Target="[#NexOrderDeskExe]" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon.ico" />
+        <RegistryValue Root="HKCU" Key="Software\Promotees\NexOrderDesk" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <Feature Id="Main" Title="NEX ORDER DESK" Level="1">
+      <ComponentRef Id="MainExe" />
+      <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="DesktopShortcut" />
+    </Feature>
+
+    <!-- standard setup wizard: welcome, licence, install folder, progress, finish -->
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <WixVariable Id="WixUILicenseRtf" Value="$(sys.SOURCEFILEDIR)license.rtf" />
+    <WixVariable Id="WixUIBannerBmp" Value="$(sys.SOURCEFILEDIR)banner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(sys.SOURCEFILEDIR)dialog.bmp" />
+  </Package>
+</Wix>

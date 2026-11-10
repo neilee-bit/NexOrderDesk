@@ -1,0 +1,84 @@
+<Window x:Class="NexOrderDesk.Views.PrintPreviewWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Print / PDF" Width="940" Height="680" MinWidth="760" MinHeight="520" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner" Background="#F4F5F7" FontFamily="Segoe UI" UseLayoutRounding="True">
+  <Window.Resources>
+    <Style x:Key="LayoutOption" TargetType="RadioButton">
+      <Setter Property="Cursor" Value="Hand"/><Setter Property="Margin" Value="0,0,0,6"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Border x:Name="Bd" CornerRadius="8" Background="White" BorderBrush="#D9DCE1" BorderThickness="1.5" Padding="10,7">
+            <ContentPresenter/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="#9AA0A9"/></Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Bd" Property="BorderBrush" Value="#1E1E1E"/>
+              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentSoftBrush}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key="OptTitle" TargetType="TextBlock"><Setter Property="FontSize" Value="12.5"/><Setter Property="FontWeight" Value="Bold"/></Style>
+    <Style x:Key="OptText" TargetType="TextBlock"><Setter Property="FontSize" Value="10.5"/><Setter Property="Foreground" Value="#6B7280"/><Setter Property="TextWrapping" Value="Wrap"/></Style>
+    <Style x:Key="DlgButton" TargetType="Button">
+      <Setter Property="Height" Value="32"/><Setter Property="FontSize" Value="12.5"/><Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="#1E1E1E"/><Setter Property="Cursor" Value="Hand"/><Setter Property="Background" Value="White"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Bd" CornerRadius="7" Background="{TemplateBinding Background}" BorderBrush="#D9DCE1" BorderThickness="1">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="#9AA0A9"/></Trigger></ControlTemplate.Triggers>
+        </ControlTemplate></Setter.Value></Setter>
+    </Style>
+  </Window.Resources>
+
+  <Grid>
+    <Grid.ColumnDefinitions><ColumnDefinition Width="270"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+
+    <!-- options -->
+    <DockPanel Margin="14">
+      <TextBlock DockPanel.Dock="Top" Text="Print / PDF" FontSize="17" FontWeight="ExtraBold" Margin="0,0,0,2"/>
+      <TextBlock DockPanel.Dock="Top" x:Name="OrderText" FontSize="11" Foreground="#6B7280" Margin="0,0,0,10"/>
+
+      <StackPanel DockPanel.Dock="Bottom">
+        <CheckBox x:Name="IncludeBack" Content="Include the back side" Margin="2,4,0,10" FontSize="11.5" Checked="OnOptionChanged" Unchecked="OnOptionChanged"/>
+        <Button x:Name="PrintBtn" Style="{StaticResource DlgButton}" Background="{DynamicResource AccentBrush}" Content="&#x1F5A8;  Print…" Click="OnPrint" Margin="0,0,0,6"/>
+        <Button x:Name="PdfBtn" Style="{StaticResource DlgButton}" Content="&#x1F4C4;  Save PDF…" Click="OnPdf" Margin="0,0,0,6"/>
+        <Button Style="{StaticResource DlgButton}" Content="Close" IsCancel="True" Click="OnClose"/>
+      </StackPanel>
+
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+          <RadioButton x:Name="OptSingle" Style="{StaticResource LayoutOption}" GroupName="L" Tag="Single" Checked="OnOptionChanged">
+            <StackPanel><TextBlock Style="{StaticResource OptTitle}" Text="A.  Single sheet"/><TextBlock Style="{StaticResource OptText}" Text="One sheet on a full A4 page (landscape)."/></StackPanel>
+          </RadioButton>
+          <RadioButton x:Name="OptTwoUp" Style="{StaticResource LayoutOption}" GroupName="L" Tag="TwoUp" Checked="OnOptionChanged">
+            <StackPanel><TextBlock Style="{StaticResource OptTitle}" Text="B.  Two copies on one A4"/><TextBlock Style="{StaticResource OptText}" Text="Same sheet twice: top half and bottom half, with a cut line."/></StackPanel>
+          </RadioButton>
+          <RadioButton x:Name="OptDuplex" Style="{StaticResource LayoutOption}" GroupName="L" Tag="Duplex" Checked="OnOptionChanged">
+            <StackPanel><TextBlock Style="{StaticResource OptTitle}" Text="C.  Two copies, double-sided"/><TextBlock Style="{StaticResource OptText}" Text="Top + bottom copies on both sides of the paper (long-edge flip). Side 2 = back side, or the front again if the back is empty."/></StackPanel>
+          </RadioButton>
+          <RadioButton x:Name="OptA5" Style="{StaticResource LayoutOption}" GroupName="L" Tag="A5" Checked="OnOptionChanged">
+            <StackPanel><TextBlock Style="{StaticResource OptTitle}" Text="A5 landscape"/><TextBlock Style="{StaticResource OptText}" Text="The sheet fills an A5 page."/></StackPanel>
+          </RadioButton>
+          <RadioButton x:Name="OptHalf" Style="{StaticResource LayoutOption}" GroupName="L" Tag="Half" Checked="OnOptionChanged">
+            <StackPanel><TextBlock Style="{StaticResource OptTitle}" Text="Half A4"/><TextBlock Style="{StaticResource OptText}" Text="One sheet at the top of an A4 page."/></StackPanel>
+          </RadioButton>
+        </StackPanel>
+      </ScrollViewer>
+    </DockPanel>
+
+    <!-- preview -->
+    <Border Grid.Column="1" Background="#E4E6EA">
+      <Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl x:Name="Pages" Margin="20,16">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel HorizontalAlignment="Center"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          </ItemsControl>
+        </ScrollViewer>
+        <TextBlock x:Name="Busy" Text="Preparing preview…" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="#6B7280"/>
+      </Grid>
+    </Border>
+  </Grid>
+</Window>

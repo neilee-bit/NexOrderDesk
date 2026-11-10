@@ -1,0 +1,67 @@
+<UserControl x:Class="NexOrderDesk.Views.Sections.ImageUploadPanel" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:NexOrderDesk.Views.Sections" xmlns:m="clr-namespace:NexOrderDesk.Models" xmlns:h="clr-namespace:NexOrderDesk.Core" x:Name="Root">
+  <!-- Front image card. Pictures inside are free objects: drag to move, corner to resize (proportions kept), Ctrl+C / Ctrl+V,
+       several pictures per card. Click the card, then Ctrl+V. Double-click (or the small upload button) to browse. -->
+  <!-- Free picture area: no card, no frame. A thin accent line marks the selected area while editing only. -->
+  <Border BorderThickness="0,0,0,2" Background="Transparent">
+    <Border.Style>
+      <Style TargetType="Border">
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Style.Triggers>
+          <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+          </DataTrigger>
+          <Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="BorderBrush" Value="Transparent"/></Trigger>
+        </Style.Triggers>
+      </Style>
+    </Border.Style>
+    <Grid Margin="2">
+
+      <!-- empty-card prompt (under the pictures, never blocks the mouse) -->
+      <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False">
+        <StackPanel.Style>
+          <Style TargetType="StackPanel">
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding Doc.Items.Count, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+              <Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Visibility" Value="Collapsed"/></Trigger>
+            </Style.Triggers>
+          </Style>
+        </StackPanel.Style>
+        <Viewbox Width="34" Height="34" Opacity="0.75">
+          <Canvas Width="24" Height="24">
+            <Path Data="M4,6 L7,6 L8.5,3.5 L15.5,3.5 L17,6 L20,6 Q22,6 22,8 L22,19 Q22,21 20,21 L4,21 Q2,21 2,19 L2,8 Q2,6 4,6 Z" Fill="{DynamicResource AccentBrush}"/>
+            <Ellipse Canvas.Left="7.5" Canvas.Top="8.5" Width="9" Height="9" Stroke="White" StrokeThickness="2"/>
+          </Canvas>
+        </Viewbox>
+        <TextBlock Text="{Binding Caption, RelativeSource={RelativeSource AncestorType=UserControl}}" Margin="0,6,0,0" FontSize="12" FontWeight="SemiBold" Foreground="#6B7280" TextAlignment="Center"/>
+        <TextBlock Text="click, then Ctrl+V  ·  double-click to browse  ·  drag &amp; drop  ·  round handle = rotate  ·  double-click a picture = crop" FontSize="8" Foreground="#A0A4AE" TextAlignment="Center"/>
+        <TextBlock Text="PNG, JPG, WEBP, SVG, GIF, BMP, TIFF" FontSize="7.5" Foreground="#B5B9C2" TextAlignment="Center"/>
+      </StackPanel>
+
+      <!-- pictures: movable / resizable objects -->
+      <s:FreeCanvasView x:Name="Pictures" Compact="True" ShowToolbar="False" Margin="0"
+                        Doc="{Binding Doc, RelativeSource={RelativeSource AncestorType=UserControl}}" IsEditable="{Binding IsEditable}"/>
+
+
+      <!-- small upload / clear buttons (top-right) -->
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,2,0">
+        <StackPanel.Style>
+          <Style TargetType="StackPanel"><Style.Triggers><Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Visibility" Value="Collapsed"/></Trigger></Style.Triggers></Style>
+        </StackPanel.Style>
+        <Button Width="20" Height="20" Click="OnUpload" ToolTip="Upload picture(s)" Style="{StaticResource ActionButton}" Margin="0,0,3,0">
+          <Viewbox Width="11" Height="11"><Path Data="M12,3 L12,16 M6,9 L12,3 L18,9 M4,20 H20" Stroke="#444" StrokeThickness="2.2" StrokeLineJoin="Round"/></Viewbox>
+        </Button>
+        <Button Width="20" Height="20" Click="OnRemove" ToolTip="Remove all pictures from this card">
+          <Button.Style>
+            <Style TargetType="Button" BasedOn="{StaticResource ActionButton}">
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding Doc.Items.Count, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="0"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </Button.Style>
+          <Viewbox Width="11" Height="11"><Path Data="{StaticResource TrashGeometry}" Stroke="#444" StrokeThickness="1.8" StrokeLineJoin="Round"/></Viewbox>
+        </Button>
+      </StackPanel>
+    </Grid>
+  </Border>
+</UserControl>

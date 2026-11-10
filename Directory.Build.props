@@ -1,0 +1,22 @@
+<Project>
+  <!-- =======================================================================================
+       NEX ORDER DESK - central version & release configuration (the ONLY place to change it).
+       Used by the app (About / update check), the MSI (ProductVersion) and the release scripts.
+       On GitHub the release workflow takes the version from the tag (v2.7.1 -> 2.7.1) and the
+       repository from GitHub itself, so these values only matter for local builds.
+       ======================================================================================= -->
+  <PropertyGroup>
+    <!-- Semantic version MAJOR.MINOR.PATCH (MSI-compatible: max 255.255.65535) -->
+    <Version>2.7.0</Version>
+
+    <!-- GitHub repository that hosts the releases, as  owner/repo  (e.g. promotees/NexOrderDesk).
+         Leave OWNER/REPO for local test builds: online updates are then switched off. -->
+    <UpdateRepository>neilee-bit/NexOrderDesk</UpdateRepository>
+
+    <!-- Oldest installed version that may update itself automatically to new releases. -->
+    <MinimumSupportedVersion>2.7.0</MinimumSupportedVersion>
+
+    <!-- light = needs the .NET 8 Desktop Runtime (small MSI), full = self-contained (big MSI). Set by the build scripts. -->
+    <Distribution>light</Distribution>
+  </PropertyGroup>
+</Project>

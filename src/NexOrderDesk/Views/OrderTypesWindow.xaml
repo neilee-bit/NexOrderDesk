@@ -1,0 +1,188 @@
+<Window x:Class="NexOrderDesk.Views.OrderTypesWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:m="clr-namespace:NexOrderDesk.Models"
+        Title="Order types &amp; theme colours" Width="720" Height="540" MinWidth="640" MinHeight="480" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner" Background="#F4F5F7" FontFamily="Segoe UI" UseLayoutRounding="True">
+  <Window.Resources>
+    <Style x:Key="DlgButton" TargetType="Button">
+      <Setter Property="Height" Value="30"/><Setter Property="Padding" Value="12,0"/><Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="#1E1E1E"/><Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Background" Value="White"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Bd" CornerRadius="7" Background="{TemplateBinding Background}" BorderBrush="#D9DCE1" BorderThickness="1" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="#9AA0A9"/></Trigger>
+            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Bd" Property="Opacity" Value="0.45"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource DlgButton}">
+      <Setter Property="Width" Value="30"/><Setter Property="Padding" Value="0"/>
+    </Style>
+    <Style x:Key="InputBox" TargetType="TextBox">
+      <Setter Property="Height" Value="30"/><Setter Property="FontSize" Value="13"/><Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="Padding" Value="6,0"/><Setter Property="BorderBrush" Value="#D9DCE1"/><Setter Property="Background" Value="White"/>
+    </Style>
+    <Style x:Key="FieldLabel" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="11"/><Setter Property="FontWeight" Value="Bold"/><Setter Property="Foreground" Value="#6B7280"/>
+      <Setter Property="Margin" Value="0,10,0,4"/>
+    </Style>
+    <Style x:Key="ChoiceToggle" TargetType="RadioButton">
+      <Setter Property="Cursor" Value="Hand"/><Setter Property="FontSize" Value="12"/><Setter Property="Margin" Value="0,0,6,0"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Border x:Name="Bd" CornerRadius="7" Background="White" BorderBrush="#D9DCE1" BorderThickness="1.5" Padding="10,5">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="#9AA0A9"/></Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Bd" Property="BorderBrush" Value="#1E1E1E"/>
+              <Setter TargetName="Bd" Property="Background" Value="#F1F1F3"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate></Setter.Value></Setter>
+    </Style>
+  </Window.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+
+    <Border x:Name="HeaderBand" Background="{DynamicResource AccentBrush}" Padding="16,12">
+      <StackPanel>
+        <TextBlock Text="Order types &amp; theme colours" FontSize="17" FontWeight="ExtraBold" Foreground="#1E1E1E"/>
+        <TextBlock Text="These are the choices in  +  New order. Add your own type, pick its sheet layout, icon and theme colour."
+                   FontSize="10.5" Foreground="#1E1E1E" Opacity="0.75" TextWrapping="Wrap" Margin="0,3,0,0"/>
+      </StackPanel>
+    </Border>
+
+    <Grid Grid.Row="1" Margin="14,12,14,0">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="240"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+
+      <!-- Type list -->
+      <Grid>
+        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <Border Background="White" BorderBrush="#D9DCE1" BorderThickness="1" CornerRadius="8">
+          <ListBox x:Name="TypeList" SelectionChanged="OnTypeSelected" BorderThickness="0" Background="Transparent" Margin="2"
+                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemContainerStyle>
+              <Style TargetType="ListBoxItem"><Setter Property="Padding" Value="8,6"/><Setter Property="HorizontalContentAlignment" Value="Stretch"/></Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+              <DataTemplate DataType="{x:Type m:OrderTypeDef}">
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <Border Width="28" Height="28" CornerRadius="6" Background="{Binding Dot}" Margin="0,0,9,0">
+                    <Viewbox Width="16" Height="16"><Grid><Path Data="{Binding Icon}" Fill="#1E1E1E" Visibility="{Binding NoIconImage, Converter={StaticResource BoolToVis}}"/>
+              <Image Source="{Binding IconImage}" Width="40" Height="40" RenderOptions.BitmapScalingMode="HighQuality" Visibility="{Binding HasIconImage, Converter={StaticResource BoolToVis}}"/></Grid></Viewbox>
+                  </Border>
+                  <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding LayoutText}" FontSize="10" Foreground="#9AA0A9"/>
+                  </StackPanel>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Border>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
+          <Button Style="{StaticResource DlgButton}" Content="+ New type" Click="OnNew" Margin="0,0,6,0"/>
+          <Button Style="{StaticResource IconButton}" Content="&#x25B2;" Click="OnUp" Margin="0,0,4,0" ToolTip="Move up"/>
+          <Button Style="{StaticResource IconButton}" Content="&#x25BC;" Click="OnDown" Margin="0,0,10,0" ToolTip="Move down"/>
+          <Button Style="{StaticResource IconButton}" Click="OnDelete" ToolTip="Delete this order type">
+            <Viewbox Width="13" Height="13"><Path Data="{StaticResource TrashGeometry}" Stroke="#B42318" StrokeThickness="1.8" StrokeLineJoin="Round"/></Viewbox>
+          </Button>
+        </StackPanel>
+      </Grid>
+
+      <Rectangle Grid.Column="1" Width="1" Fill="#E2E4E8" Margin="14,0"/>
+
+      <!-- Editor -->
+      <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+        <StackPanel x:Name="Editor">
+          <!-- live preview of the banner -->
+          <Border x:Name="Preview" CornerRadius="7" Height="40" Background="#FFC914">
+            <Grid>
+              <Viewbox Width="24" Height="24" HorizontalAlignment="Left" Margin="12,0,0,0">
+                <Grid><Path x:Name="PreviewIcon" Fill="#1E1E1E"/><Image x:Name="PreviewImage" Width="40" Height="40" RenderOptions.BitmapScalingMode="HighQuality"/></Grid>
+              </Viewbox>
+              <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left" Margin="46,0,10,0">
+                <TextBlock x:Name="PreviewTitle" FontSize="16" FontWeight="ExtraBold" Foreground="#1E1E1E" VerticalAlignment="Center"/>
+              </Viewbox>
+            </Grid>
+          </Border>
+
+          <TextBlock Style="{StaticResource FieldLabel}" Text="NAME IN THE NEW-ORDER MENU"/>
+          <TextBox x:Name="NameBox" Style="{StaticResource InputBox}" TextChanged="OnFieldChanged"/>
+
+          <TextBlock Style="{StaticResource FieldLabel}" Text="SHEET TITLE (printed on the banner)"/>
+          <TextBox x:Name="TitleBox" Style="{StaticResource InputBox}" TextChanged="OnFieldChanged" CharacterCasing="Upper"/>
+
+          <TextBlock Style="{StaticResource FieldLabel}" Text="SHEET LAYOUT"/>
+          <StackPanel Orientation="Horizontal">
+            <RadioButton x:Name="LayoutTops" Style="{StaticResource ChoiceToggle}" GroupName="Layout" Checked="OnFieldChanged"
+                         ToolTip="Neck, collar, sleeve, placket, buttons, piping + Adults (S/S), Adults (L/S), Kids sizes">
+              <TextBlock Text="Tops  (T-shirt / jacket)"/>
+            </RadioButton>
+            <RadioButton x:Name="LayoutBottoms" Style="{StaticResource ChoiceToggle}" GroupName="Layout" Checked="OnFieldChanged"
+                         ToolTip="Bottom type, waist, pockets, leg opening, additional custom + XS to 4XL size breakdown">
+              <TextBlock Text="Bottoms / shorts"/>
+            </RadioButton>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+            <RadioButton x:Name="LayoutFlags" Style="{StaticResource ChoiceToggle}" GroupName="Layout" Checked="OnFieldChanged"
+                         ToolTip="Flag artwork, flag sizes (ft / in, single / double sided, qty) and flag materials">
+              <TextBlock Text="Flags"/>
+            </RadioButton>
+            <RadioButton x:Name="LayoutJacket" Style="{StaticResource ChoiceToggle}" GroupName="Layout" Checked="OnFieldChanged"
+                         ToolTip="Jacket type, collar, sleeve &amp; cuff, closure, pockets, additional customisation + Adults sizes">
+              <TextBlock Text="Jacket"/>
+            </RadioButton>
+            <RadioButton x:Name="LayoutDtf" Style="{StaticResource ChoiceToggle}" GroupName="Layout" Checked="OnFieldChanged"
+                         ToolTip="Order no, delivery date, order name, customer, coordinator + one big artwork workspace">
+              <TextBlock Text="DTF workspace"/>
+            </RadioButton>
+          </StackPanel>
+
+          <TextBlock Style="{StaticResource FieldLabel}" Text="ICON"/>
+          <WrapPanel x:Name="IconRow" Orientation="Horizontal"/>
+          <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+            <Button Style="{StaticResource DlgButton}" Content="Upload my own icon…" Click="OnUploadIcon" Margin="0,0,6,0"
+                    ToolTip="Use any picture (PNG, JPG, SVG, ICO, WEBP…) as this order type's icon"/>
+            <Button x:Name="ClearIconBtn" Style="{StaticResource DlgButton}" Content="Use built-in icon" Click="OnClearIcon"/>
+          </StackPanel>
+
+          <TextBlock Style="{StaticResource FieldLabel}" Text="THEME COLOUR"/>
+          <StackPanel Orientation="Horizontal">
+            <TextBox x:Name="HexBox" Style="{StaticResource InputBox}" Width="96" TextChanged="OnFieldChanged"/>
+            <Border x:Name="Swatch" Width="30" Height="30" CornerRadius="15" Margin="8,0,0,0" BorderBrush="#BBBBBB" BorderThickness="1"/>
+          </StackPanel>
+          <ItemsControl x:Name="Palette" Margin="0,8,0,0">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Width="24" Height="24" Margin="0,0,6,6" Cursor="Hand" Tag="{Binding}" Click="OnPaletteClick" ToolTip="{Binding}">
+                  <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                      <Border x:Name="Bd" CornerRadius="12" BorderBrush="#C8C8C8" BorderThickness="1" Background="{Binding}"/>
+                      <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="#1E1E1E"/></Trigger></ControlTemplate.Triggers>
+                    </ControlTemplate>
+                  </Button.Template>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Text="Changes apply as you type. Open orders of this type follow the new colour (unless that order has its own colour)."
+                     FontSize="10.5" Foreground="#6B7280" TextWrapping="Wrap" Margin="0,6,0,0"/>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+
+    <DockPanel Grid.Row="2" Margin="14,12,14,14">
+      <Button DockPanel.Dock="Right" Style="{StaticResource DlgButton}" Content="Done" Width="90" HorizontalAlignment="Right" IsCancel="True" Click="OnClose"/>
+      <TextBlock Text="A type's layout only affects NEW orders; already-open sheets keep theirs." VerticalAlignment="Center" Foreground="#6B7280" FontSize="11"/>
+    </DockPanel>
+  </Grid>
+</Window>

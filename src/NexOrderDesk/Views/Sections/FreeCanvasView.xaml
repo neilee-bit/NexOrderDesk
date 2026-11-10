@@ -1,0 +1,53 @@
+<UserControl x:Class="NexOrderDesk.Views.Sections.FreeCanvasView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Free-form editable workspace: text boxes + pictures that can be pasted, dropped, moved and resized anywhere. -->
+  <UserControl.Resources>
+    <Style x:Key="ToolBtn" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+      <Setter Property="Height" Value="20"/><Setter Property="FontSize" Value="10"/><Setter Property="Padding" Value="7,0"/>
+      <Setter Property="Margin" Value="0,0,3,0"/><Setter Property="MinWidth" Value="24"/>
+    </Style>
+    <DrawingBrush x:Key="DotGrid" TileMode="Tile" Viewport="0,0,16,16" ViewportUnits="Absolute" Viewbox="0,0,16,16" ViewboxUnits="Absolute">
+      <DrawingBrush.Drawing>
+        <DrawingGroup>
+          <GeometryDrawing Brush="White"><GeometryDrawing.Geometry><RectangleGeometry Rect="0,0,16,16"/></GeometryDrawing.Geometry></GeometryDrawing>
+          <GeometryDrawing Brush="#D5D8DE"><GeometryDrawing.Geometry><EllipseGeometry Center="1,1" RadiusX="0.8" RadiusY="0.8"/></GeometryDrawing.Geometry></GeometryDrawing>
+        </DrawingGroup>
+      </DrawingBrush.Drawing>
+    </DrawingBrush>
+  </UserControl.Resources>
+
+  <DockPanel>
+    <!-- compact toolbar (editing only) -->
+    <DockPanel x:Name="Toolbar" DockPanel.Dock="Top" Margin="0,0,0,4" LastChildFill="True">
+      <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+        <Button Style="{StaticResource ToolBtn}" Click="OnAddText" ToolTip="Add a text box (or double-click empty space)">
+          <TextBlock><Run Text="T" FontWeight="ExtraBold"/><Run Text="  Text"/></TextBlock>
+        </Button>
+        <Button Style="{StaticResource ToolBtn}" Content="&#x1F5BC;  Images…" Click="OnAddImages" ToolTip="Import one or more pictures (PNG, JPG, WEBP, SVG, GIF, BMP, TIFF…)"/>
+        <Rectangle Width="1" Fill="#D9DCE1" Margin="3,2,6,2"/>
+        <Button Style="{StaticResource ToolBtn}" Content="A&#x2212;" Click="OnFontMinus" ToolTip="Smaller text (selected text box)"/>
+        <Button Style="{StaticResource ToolBtn}" Content="A+" Click="OnFontPlus" ToolTip="Bigger text (selected text box)"/>
+        <Button Style="{StaticResource ToolBtn}" Content="B" FontWeight="ExtraBold" Click="OnBold" ToolTip="Bold on / off (selected text box)"/>
+        <Button Style="{StaticResource ToolBtn}" Click="OnColor" ToolTip="Text colour: black / red / blue (selected text box)">
+          <Ellipse x:Name="ColorDot" Width="10" Height="10" Fill="#1E1E1E"/>
+        </Button>
+        <Rectangle Width="1" Fill="#D9DCE1" Margin="3,2,6,2"/>
+        <Button Style="{StaticResource ToolBtn}" Content="&#x2702; Crop" Click="OnCrop" ToolTip="Crop the selected picture (or double-click it). The original is kept."/>
+        <Button Style="{StaticResource ToolBtn}" Content="&#x27F3; 90°" Click="OnRotate90" ToolTip="Rotate the selected object 90° (or drag its round handle)"/>
+        <Rectangle Width="1" Fill="#D9DCE1" Margin="3,2,6,2"/>
+        <Button Style="{StaticResource ToolBtn}" Content="Delete" Click="OnDeleteSelected" ToolTip="Remove the selected object (Del)"/>
+        <Button Style="{StaticResource ToolBtn}" Content="Clear" Click="OnClear" ToolTip="Remove every text box and picture"/>
+      </StackPanel>
+      <TextBlock x:Name="HintText" Text="Ctrl+V pastes text or pictures  ·  drag &amp; drop files  ·  drag the edge to move, corner to resize"
+                 FontSize="9" Foreground="#9AA0A9" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" Margin="6,0,2,0"/>
+    </DockPanel>
+
+    <Border x:Name="Frame" BorderBrush="#D9DCE1" BorderThickness="1" CornerRadius="6" Background="White">
+      <Grid x:Name="ClipHost" ClipToBounds="True">
+        <Canvas x:Name="Surface" Background="{StaticResource DotGrid}" Focusable="True" AllowDrop="True" FocusVisualStyle="{x:Null}"
+                MouseLeftButtonDown="OnSurfaceDown" Drop="OnDrop" DragOver="OnDragOver" KeyDown="OnSurfaceKeyDown"/>
+        <TextBlock x:Name="EmptyHint" IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"
+                   Foreground="#A0A4AE" FontSize="12" LineHeight="18"/>
+      </Grid>
+    </Border>
+  </DockPanel>
+</UserControl>

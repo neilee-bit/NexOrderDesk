@@ -1,0 +1,14 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+  <!-- Builds NexOrderDesk-Setup.msi from the published NexOrderDesk.exe in installer\payload (see build_msi.bat). -->
+  <PropertyGroup>
+    <OutputName>NexOrderDesk-Setup</OutputName>
+    <InstallerPlatform>x64</InstallerPlatform>
+    <!-- MSI ProductVersion = $(Version) from Directory.Build.props (or -p:Version=x.y.z from the release scripts) -->
+    <DefineConstants>ProductVersion=$(Version)</DefineConstants>
+    <!-- shortcut components use the standard HKCU key-path pattern; these validation notes are harmless -->
+    <SuppressIces>ICE38;ICE43;ICE57;ICE64;ICE91</SuppressIces>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,112 @@
+# NEX ORDER DESK - build and release on GitHub
+#
+# Push a version tag (git tag v2.7.1 && git push origin v2.7.1) and this workflow:
+#   1. builds the app (light + full)      2. builds both MSI installers + the one-click setups (online / offline)
+#   3. validates versions / MSI files
+#   4. makes SHA256 checksums             5. makes update.json (the manifest the app reads)
+#   6. uploads everything to a GitHub Release with the notes from release-notes/v<version>.md
+#   7. leaves the release as a DRAFT for you to check - press "Publish release" on GitHub.
+#      (Set the repository variable AUTO_PUBLISH = true to publish immediately.)
+#
+# Only PUBLISHED, non-draft releases are seen by the installed apps
+# (they read https://github.com/<owner>/<repo>/releases/latest/download/update.json).
+#
+# Optional: publish installers to a separate PUBLIC repository (keep the source private):
+#   repository variable RELEASES_REPO = owner/public-repo,  secret RELEASES_TOKEN = token with contents:write there.
+
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Version tag to build, e.g. v2.7.1 (the tag must already exist)'
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      RELEASES_REPO: ${{ vars.RELEASES_REPO }}
+      AUTO_PUBLISH: ${{ vars.AUTO_PUBLISH }}
+    steps:
+      - name: Check out the tagged code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Set up .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Work out version and target repository
+        shell: pwsh
+        run: |
+          if ($env:TAG -notmatch '^v(\d+)\.(\d+)\.(\d+)$') { throw "Tag '$env:TAG' must look like v2.7.1" }
+          $version = $env:TAG.Substring(1)
+          $repo = if ($env:RELEASES_REPO) { $env:RELEASES_REPO } else { '${{ github.repository }}' }
+          "VERSION=$version" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "TARGET_REPO=$repo" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Building $version for $repo"
+
+      - name: Build installers, checksums and update manifest
+        shell: pwsh
+        env:
+          # optional code signing (see tools/sign.ps1) - leave the secrets unset to build unsigned
+          SIGN_PFX_BASE64: ${{ secrets.SIGN_PFX_BASE64 }}
+          SIGN_PFX_PASSWORD: ${{ secrets.SIGN_PFX_PASSWORD }}
+          SIGN_COMMAND: ${{ secrets.SIGN_COMMAND }}
+        run: ./tools/build-release.ps1 -Version $env:VERSION -Repository $env:TARGET_REPO
+
+      - name: Verify release files
+        shell: pwsh
+        run: |
+          $m = Get-Content release/update.json -Raw | ConvertFrom-Json
+          if ($m.version -ne $env:VERSION) { throw "update.json version $($m.version) <> $env:VERSION" }
+          $files = @($m.installers.PSObject.Properties.Value) + @($m.setup, $m.offlineSetup | Where-Object { $_ })
+          foreach ($i in $files) {
+            $f = Join-Path release $i.fileName
+            if (-not (Test-Path $f)) { throw "Missing $f" }
+            $h = (Get-FileHash $f -Algorithm SHA256).Hash
+            if ($h -ne $i.sha256) { throw "Checksum mismatch for $($i.fileName)" }
+            Write-Host "OK  $($i.fileName)  $h"
+          }
+
+      - name: Keep the build files (also downloadable from this workflow run)
+        uses: actions/upload-artifact@v4
+        with:
+          name: NexOrderDesk-${{ env.VERSION }}
+          path: release/*
+
+      - name: Create GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          $files = @(Get-ChildItem release -File | Where-Object { $_.Name -ne 'RELEASE_NOTES.md' } | ForEach-Object { $_.FullName })
+          $draft = if ($env:AUTO_PUBLISH -eq 'true') { @() } else { @('--draft') }
+          gh release view $env:TAG --repo $env:TARGET_REPO *> $null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Release $env:TAG exists - replacing its files"
+            gh release upload $env:TAG @files --repo $env:TARGET_REPO --clobber
+          } else {
+            $target = @()
+            if ($env:TARGET_REPO -eq '${{ github.repository }}') { $target = @('--verify-tag') }
+            gh release create $env:TAG @files --repo $env:TARGET_REPO --title "NEX ORDER DESK $env:VERSION" `
+              --notes-file release/RELEASE_NOTES.md --latest @draft @target
+          }
+          if ($LASTEXITCODE -ne 0) { throw "GitHub release step failed" }
+          if ($env:AUTO_PUBLISH -ne 'true') {
+            Write-Host "::notice::Draft release $env:TAG created. Check it on GitHub and press 'Publish release' - only then do apps see the update."
+          }

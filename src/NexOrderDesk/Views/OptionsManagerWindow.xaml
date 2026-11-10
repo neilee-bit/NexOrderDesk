@@ -1,0 +1,124 @@
+<Window x:Class="NexOrderDesk.Views.OptionsManagerWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:m="clr-namespace:NexOrderDesk.Models"
+        Title="Edit list" Width="430" Height="560" MinWidth="380" MinHeight="460" ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+        Background="#F4F5F7" FontFamily="Segoe UI" ResizeMode="CanResizeWithGrip" UseLayoutRounding="True">
+  <Window.Resources>
+    <Style x:Key="DlgButton" TargetType="Button">
+      <Setter Property="Height" Value="30"/><Setter Property="Padding" Value="12,0"/><Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="#1E1E1E"/><Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Background" Value="White"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Bd" CornerRadius="7" Background="{TemplateBinding Background}" BorderBrush="#D9DCE1" BorderThickness="1" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="#9AA0A9"/></Trigger>
+            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Bd" Property="Opacity" Value="0.45"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource DlgButton}">
+      <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+    </Style>
+    <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource DlgButton}">
+      <Setter Property="Width" Value="30"/><Setter Property="Padding" Value="0"/>
+    </Style>
+    <Style x:Key="InputBox" TargetType="TextBox">
+      <Setter Property="Height" Value="30"/><Setter Property="FontSize" Value="13"/><Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="Padding" Value="6,0"/><Setter Property="BorderBrush" Value="#D9DCE1"/><Setter Property="Background" Value="White"/>
+    </Style>
+    <DataTemplate x:Key="TextItem">
+      <TextBlock Text="{Binding}" FontSize="13" VerticalAlignment="Center" Margin="2,0" TextTrimming="CharacterEllipsis"/>
+    </DataTemplate>
+    <DataTemplate x:Key="ColorItem" DataType="{x:Type m:ColorOption}">
+      <StackPanel Orientation="Horizontal">
+        <Ellipse Width="16" Height="16" Fill="{Binding Brush}" Stroke="#C8C8C8" StrokeThickness="0.8" Margin="2,0,9,0"/>
+        <TextBlock Text="{Binding Name}" FontSize="13" VerticalAlignment="Center"/>
+        <TextBlock Text="{Binding Hex}" FontSize="10" Foreground="#9AA0A9" VerticalAlignment="Center" Margin="8,0,0,0"/>
+      </StackPanel>
+    </DataTemplate>
+  </Window.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+
+    <!-- Header -->
+    <Border Background="{DynamicResource AccentBrush}" Padding="16,12">
+      <StackPanel>
+        <TextBlock x:Name="Heading" FontSize="17" FontWeight="ExtraBold" Foreground="#1E1E1E"/>
+        <TextBlock Text="Type a name and press Enter to add. Select an item to rename, recolour, move or delete it. Changes save automatically."
+                   FontSize="10.5" Foreground="#1E1E1E" Opacity="0.75" TextWrapping="Wrap" Margin="0,3,0,0"/>
+      </StackPanel>
+    </Border>
+
+    <Grid Grid.Row="1" Margin="14,12,14,0">
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+
+      <!-- Add / edit box -->
+      <Grid>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <Grid>
+          <TextBox x:Name="NameBox" Style="{StaticResource InputBox}" KeyDown="OnNameKeyDown" TextChanged="OnNameChanged"/>
+          <TextBlock x:Name="Placeholder" Text="New item name…" IsHitTestVisible="False" Foreground="#A0A4AE" FontSize="13"
+                     VerticalAlignment="Center" Margin="9,0,0,0"/>
+        </Grid>
+        <Button Grid.Column="1" x:Name="AddButton" Style="{StaticResource AccentButton}" Content="+ Add" Margin="6,0,0,0" Click="OnAdd" ToolTip="Add as a new item (Enter)"/>
+        <Button Grid.Column="2" x:Name="UpdateButton" Style="{StaticResource DlgButton}" Content="Rename" Margin="6,0,0,0" Click="OnUpdate"
+                ToolTip="Save the new name / colour onto the selected item" IsEnabled="False"/>
+      </Grid>
+
+      <!-- Colour row (colours list only) -->
+      <StackPanel x:Name="HexRow" Grid.Row="1" Margin="0,8,0,0" Visibility="Collapsed">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="Colour" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12" FontWeight="SemiBold"/>
+          <TextBox x:Name="HexBox" Style="{StaticResource InputBox}" Width="96" TextChanged="OnHexChanged"/>
+          <Border x:Name="Swatch" Width="30" Height="30" CornerRadius="15" Margin="8,0,0,0" BorderBrush="#BBBBBB" BorderThickness="1" Background="Gray"/>
+        </StackPanel>
+        <ItemsControl x:Name="Palette" Margin="0,8,0,0">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Button Width="22" Height="22" Margin="0,0,5,5" Cursor="Hand" Tag="{Binding}" Click="OnPaletteClick" ToolTip="{Binding}">
+                <Button.Template>
+                  <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" CornerRadius="11" BorderBrush="#C8C8C8" BorderThickness="1" Background="{Binding}"/>
+                    <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="#1E1E1E"/></Trigger></ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </Button.Template>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <!-- List + side buttons -->
+      <Grid Grid.Row="2" Margin="0,10,0,0">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <Border Background="White" BorderBrush="#D9DCE1" BorderThickness="1" CornerRadius="8">
+          <ListBox x:Name="Items" SelectionChanged="OnSelectionChanged" BorderThickness="0" Background="Transparent" Margin="2"
+                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemTemplate="{StaticResource TextItem}">
+            <ListBox.ItemContainerStyle>
+              <Style TargetType="ListBoxItem">
+                <Setter Property="Padding" Value="8,6"/>
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+              </Style>
+            </ListBox.ItemContainerStyle>
+          </ListBox>
+        </Border>
+        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+          <Button Style="{StaticResource IconButton}" Content="&#x25B2;" Margin="0,0,0,6" Click="OnUp" ToolTip="Move up"/>
+          <Button Style="{StaticResource IconButton}" Content="&#x25BC;" Margin="0,0,0,18" Click="OnDown" ToolTip="Move down"/>
+          <Button Style="{StaticResource IconButton}" Click="OnDelete" ToolTip="Delete the selected item">
+            <Viewbox Width="13" Height="13"><Path Data="{StaticResource TrashGeometry}" Stroke="#B42318" StrokeThickness="1.8" StrokeLineJoin="Round"/></Viewbox>
+          </Button>
+        </StackPanel>
+      </Grid>
+    </Grid>
+
+    <DockPanel Grid.Row="2" Margin="14,12,14,14">
+      <TextBlock x:Name="CountText" VerticalAlignment="Center" Foreground="#6B7280" FontSize="11"/>
+      <Button DockPanel.Dock="Right" Style="{StaticResource DlgButton}" Content="Done" Width="90" HorizontalAlignment="Right" IsCancel="True" Click="OnClose"/>
+    </DockPanel>
+  </Grid>
+</Window>

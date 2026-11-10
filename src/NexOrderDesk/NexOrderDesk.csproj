@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>NexOrderDesk</AssemblyName>
+    <RootNamespace>NexOrderDesk</RootNamespace>
+    <ApplicationTitle>NEX ORDER DESK</ApplicationTitle>
+    <!-- Version comes from Directory.Build.props (repo root) -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- app icon: .exe, taskbar, Start menu, installer -->
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <Company>Promotees Group</Company>
+    <Product>NEX ORDER DESK</Product>
+    <NoWarn>$(NoWarn);CS8618;CS8600;CS8601;CS8602;CS8603;CS8604;CS8625</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+  <!-- release info compiled into the app (read by AppInfo / the update checker) -->
+  <ItemGroup>
+    <AssemblyMetadata Include="UpdateRepository" Value="$(UpdateRepository)" />
+    <AssemblyMetadata Include="Distribution" Value="$(Distribution)" />
+  </ItemGroup>
+</Project>

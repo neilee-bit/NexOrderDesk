@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- =====================================================================================
+       NEX ORDER DESK one-click setup (like the Chrome installer).
+       .NET Framework 4.8 is built into Windows 10/11, so this exe runs on any office PC
+       without installing anything first and stays small.
+         online build  : NexOrderDesk_Setup.exe                 - downloads the newest release from GitHub
+         offline build : -p:OfflineMsi=<path to the full .msi>  - the installer is packed inside the exe
+       Version and repository come from Directory.Build.props (repo root).
+       ===================================================================================== -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>NexOrderDesk_Setup</AssemblyName>
+    <RootNamespace>NexOrderDeskSetup</RootNamespace>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <DebugType>none</DebugType>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <Company>Promotees Group</Company>
+    <Product>NEX ORDER DESK</Product>
+    <AssemblyTitle>NEX ORDER DESK Setup</AssemblyTitle>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime.Serialization" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\logo.png" />
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+
+  <!-- offline setup: the full MSI travels inside the exe -->
+  <ItemGroup Condition="'$(OfflineMsi)' != ''">
+    <EmbeddedResource Include="$(OfflineMsi)" LogicalName="payload.msi" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="UpdateRepository" Value="$(UpdateRepository)" />
+  </ItemGroup>
+</Project>

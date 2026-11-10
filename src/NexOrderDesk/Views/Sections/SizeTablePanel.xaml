@@ -1,0 +1,106 @@
+<UserControl x:Class="NexOrderDesk.Views.Sections.SizeTablePanel" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:NexOrderDesk.Views.Sections" xmlns:m="clr-namespace:NexOrderDesk.Models" xmlns:h="clr-namespace:NexOrderDesk.Core">
+  <UserControl.Resources>
+    <Style x:Key="SizeLabel" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="10"/><Setter Property="FontWeight" Value="Bold"/><Setter Property="Foreground" Value="#000000"/>
+      <Setter Property="HorizontalAlignment" Value="Center"/><Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="TableHeader" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12"/><Setter Property="FontWeight" Value="Bold"/><Setter Property="Foreground" Value="#000000"/>
+      <Setter Property="HorizontalAlignment" Value="Center"/><Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="RowBorder" TargetType="Border">
+      <Setter Property="BorderBrush" Value="{StaticResource LineBrush}"/>
+      <Setter Property="BorderThickness" Value="0,0,0,0.6"/>
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ContentPresenter}, Path=(ItemsControl.AlternationIndex)}" Value="1">
+          <Setter Property="Background" Value="#F8F8F8"/>
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="LabelBox" TargetType="TextBox" BasedOn="{StaticResource CellBox}">
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="Foreground" Value="#000000"/>
+      <Setter Property="BorderThickness" Value="0,0,0,1"/>
+      <Setter Property="BorderBrush" Value="#B8BCC6"/>
+      <Setter Property="Margin" Value="4,2"/>
+      <Style.Triggers>
+        <Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="BorderThickness" Value="0"/></Trigger>
+      </Style.Triggers>
+    </Style>
+    <DataTemplate x:Key="SizeRow" DataType="{x:Type m:SizeEntry}">
+      <Border Style="{StaticResource RowBorder}">
+        <Grid>
+          <Grid.ColumnDefinitions><ColumnDefinition Width="5*"/><ColumnDefinition Width="7*"/></Grid.ColumnDefinitions>
+          <Grid Visibility="{Binding IsActive, Converter={StaticResource BoolToVis}}">
+            <TextBlock Style="{StaticResource SizeLabel}" Text="{Binding Label}" Visibility="{Binding IsCustom, Converter={StaticResource InvBoolToVis}}"/>
+            <!-- optional sizes (bottoms): the size itself is typed in -->
+            <TextBox Style="{StaticResource LabelBox}" Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" ToolTip="Type the size (e.g. 5XL, 28, 30, K-M)"
+                     Visibility="{Binding IsCustom, Converter={StaticResource BoolToVis}}"/>
+          </Grid>
+          <Grid Grid.Column="1" Visibility="{Binding IsActive, Converter={StaticResource BoolToVis}}">
+            <TextBox Style="{StaticResource CellBox}" Text="{Binding QtyText, UpdateSourceTrigger=PropertyChanged}" Validation.ErrorTemplate="{x:Null}"/>
+            <!-- After Submit the sleeve type is printed next to each quantity -->
+            <TextBlock Text="{Binding SleeveTag}" FontSize="7.5" FontWeight="SemiBold" Foreground="{StaticResource MutedBrush}"
+                       HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0"
+                       Visibility="{Binding DataContext.IsEditable, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InvBoolToVis}}"/>
+          </Grid>
+        </Grid>
+      </Border>
+    </DataTemplate>
+    <ItemsPanelTemplate x:Key="RowsPanel"><UniformGrid Columns="1" Rows="{Binding DataContext.SizeRowCount, RelativeSource={RelativeSource AncestorType=UserControl}}"/></ItemsPanelTemplate>
+  </UserControl.Resources>
+
+  <Border Style="{StaticResource Card}" CornerRadius="9">
+    <Grid>
+      <Grid.RowDefinitions><RowDefinition Height="24"/><RowDefinition Height="*"/><RowDefinition Height="24"/></Grid.RowDefinitions>
+      <Border Background="{DynamicResource AccentTintBrush}" CornerRadius="9,9,0,0"/>
+
+      <!-- Adults (S/S) | Adults (L/S) | Kids (S/S) | PS (S/S) - the last column appears with "+ PS sizes" -->
+      <ItemsControl Grid.RowSpan="2" ItemsSource="{Binding SizeColumns}">
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="{x:Type m:SizeColumn}">
+            <Grid>
+              <Grid.RowDefinitions><RowDefinition Height="24"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+              <Border BorderBrush="White" BorderThickness="0,0,1,0">
+                <Grid>
+                  <TextBlock Style="{StaticResource TableHeader}" Text="{Binding Header}"/>
+                  <!-- "Optional sizes" column: + adds another row -->
+                  <Button Content="+" Width="16" Height="16" FontSize="11" HorizontalAlignment="Right" Margin="0,0,4,0" Command="{Binding AddRowCommand}"
+                          ToolTip="Add another optional size row">
+                    <Button.Style>
+                      <Style TargetType="Button" BasedOn="{StaticResource ActionButton}">
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding CanAddRows}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                          <Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Visibility" Value="Collapsed"/></Trigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Button.Style>
+                  </Button>
+                </Grid>
+              </Border>
+              <ItemsControl Grid.Row="1" ItemsSource="{Binding View}" ItemTemplate="{StaticResource SizeRow}" ItemsPanel="{StaticResource RowsPanel}" AlternationCount="2"/>
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <Border Grid.Row="2" Background="{DynamicResource AccentBrush}" CornerRadius="0,0,9,9">
+        <Grid>
+          <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" FontWeight="ExtraBold" Foreground="#1E1E1E">
+            <Run Text="Total:  "/><Run Text="{Binding TotalQuantity, Mode=OneWay}"/>
+          </TextBlock>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,6,0"
+                      Visibility="{Binding IsEditable, Converter={StaticResource BoolToVis}}">
+            <!-- jackets: Kids column is optional -->
+            <ToggleButton Style="{StaticResource PillToggle}" Content="+ Kids" Width="52" Height="16" FontSize="8.5" Margin="0,0,4,0"
+                          IsChecked="{Binding IncludeKids, Mode=TwoWay}" ToolTip="Add the Kids (S/S) column"
+                          Visibility="{Binding IsJacket, Converter={StaticResource BoolToVis}}"/>
+            <ToggleButton Style="{StaticResource PillToggle}" Content="{Binding ExtraSizesText}" Width="72" Height="16" FontSize="8.5"
+                          IsChecked="{Binding IncludeExtraSizes, Mode=TwoWay}" ToolTip="{Binding ExtraSizesTip}"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

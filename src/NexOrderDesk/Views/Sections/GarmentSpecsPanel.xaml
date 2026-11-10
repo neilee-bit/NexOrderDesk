@@ -1,0 +1,111 @@
+<UserControl x:Class="NexOrderDesk.Views.Sections.GarmentSpecsPanel" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:NexOrderDesk.Views.Sections" xmlns:m="clr-namespace:NexOrderDesk.Models" xmlns:h="clr-namespace:NexOrderDesk.Core">
+  <UserControl.Resources>
+    <!-- compact rounded text field (right part of the placket / button / piping rows) -->
+    <Style x:Key="RoundShell" TargetType="Border">
+      <Setter Property="CornerRadius" Value="8"/><Setter Property="Margin" Value="0,2"/>
+      <Setter Property="Background" Value="#F6F7F9"/><Setter Property="BorderBrush" Value="#DADDE2"/><Setter Property="BorderThickness" Value="1"/>
+      <Style.Triggers>
+        <Trigger Property="h:OutputMode.IsActive" Value="True">
+          <Setter Property="Background" Value="Transparent"/><Setter Property="BorderBrush" Value="Transparent"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="RoundBox" TargetType="TextBox">
+      <Setter Property="FontSize" Value="10.5"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="Margin" Value="0,2"/><Setter Property="Padding" Value="4,0"/>
+      <Setter Property="Background" Value="#F6F7F9"/><Setter Property="BorderBrush" Value="#DADDE2"/><Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="TextBox">
+          <Border x:Name="Bd" CornerRadius="8" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentDarkBrush}"/><Setter TargetName="Bd" Property="Background" Value="White"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate></Setter.Value></Setter>
+      <Style.Triggers>
+        <Trigger Property="h:OutputMode.IsActive" Value="True">
+          <Setter Property="Background" Value="Transparent"/><Setter Property="BorderBrush" Value="Transparent"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="EmptyHint" TargetType="TextBlock">
+      <Setter Property="IsHitTestVisible" Value="False"/><Setter Property="FontSize" Value="9.5"/><Setter Property="FontStyle" Value="Italic"/>
+      <Setter Property="Foreground" Value="#A0A4AE"/><Setter Property="HorizontalAlignment" Value="Center"/><Setter Property="VerticalAlignment" Value="Center"/>
+      <Style.Triggers><Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Visibility" Value="Collapsed"/></Trigger></Style.Triggers>
+    </Style>
+    <Style x:Key="LabelText" TargetType="TextBlock"><Setter Property="VerticalAlignment" Value="Center"/></Style>
+    <Style x:Key="EditOnlyCheck" TargetType="CheckBox">
+      <Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Margin" Value="0,0,4,0"/><Setter Property="Cursor" Value="Hand"/>
+      <Style.Triggers><Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Visibility" Value="Collapsed"/></Trigger></Style.Triggers>
+    </Style>
+  </UserControl.Resources>
+
+  <Border Style="{StaticResource Card}" Padding="8,4">
+    <Grid>
+      <Grid.ColumnDefinitions><ColumnDefinition Width="0.43*"/><ColumnDefinition Width="0.57*"/></Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+
+      <Label Grid.Row="0" Content="Neck Type:" Style="{StaticResource SpecLabel}"/>
+      <ComboBox Grid.Row="0" Grid.Column="1" Style="{StaticResource FlatCombo}" BorderBrush="{StaticResource LineBrush}" h:ComboHelper.ManageKey="necks"
+                ItemsSource="{Binding Settings.NeckTypes}" SelectedItem="{Binding NeckType}"/>
+
+      <Label Grid.Row="1" Content="Collar Color:" Style="{StaticResource SpecLabel}"/>
+      <TextBox Grid.Row="1" Grid.Column="1" Style="{StaticResource SpecBox}" Text="{Binding CollarColor, UpdateSourceTrigger=PropertyChanged}"/>
+
+      <Label Grid.Row="2" Content="Sleeve Type:" Style="{StaticResource SpecLabel}"/>
+      <ComboBox Grid.Row="2" Grid.Column="1" Style="{StaticResource FlatCombo}" BorderBrush="{StaticResource LineBrush}" FontWeight="Bold" h:ComboHelper.ManageKey="sleeves"
+                ItemsSource="{Binding Settings.SleeveTypes}" SelectedItem="{Binding SleeveType}"/>
+
+      <!-- Placket / Button rows: [label] [type / count drop-down] [text, default "T-shirts match"] -->
+      <Label Grid.Row="3" Style="{StaticResource SpecLabel}">
+        <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left"><TextBlock Style="{StaticResource LabelText}" Text="Placket Type &amp; Color:"/></Viewbox>
+      </Label>
+      <Grid Grid.Row="3" Grid.Column="1">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="0.44*"/><ColumnDefinition Width="5"/><ColumnDefinition Width="0.56*"/></Grid.ColumnDefinitions>
+        <ComboBox Style="{StaticResource FlatCombo}" BorderBrush="{StaticResource LineBrush}" FontWeight="Bold" h:ComboHelper.ManageKey="plackets"
+                  ItemsSource="{Binding Settings.PlacketTypes}" SelectedItem="{Binding PlacketType}" ToolTip="Placket type"/>
+        <TextBox Grid.Column="2" Style="{StaticResource RoundBox}" Text="{Binding PlacketText, UpdateSourceTrigger=PropertyChanged}" h:DefaultText.Value="{Binding MatchText}"
+                 ToolTip="Placket colour / details - type to replace &quot;T-shirts match&quot;"/>
+      </Grid>
+
+      <Label Grid.Row="4" Style="{StaticResource SpecLabel}">
+        <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left"><TextBlock Style="{StaticResource LabelText}" Text="Button &amp; Button Color:"/></Viewbox>
+      </Label>
+      <Grid Grid.Row="4" Grid.Column="1">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="0.44*"/><ColumnDefinition Width="5"/><ColumnDefinition Width="0.56*"/></Grid.ColumnDefinitions>
+        <ComboBox Style="{StaticResource FlatCombo}" BorderBrush="{StaticResource LineBrush}" FontWeight="Bold" h:ComboHelper.ManageKey="buttons"
+                  ItemsSource="{Binding Settings.ButtonCounts}" SelectedItem="{Binding ButtonCount}" ToolTip="Number of buttons"/>
+        <TextBox Grid.Column="2" Style="{StaticResource RoundBox}" Text="{Binding ButtonText, UpdateSourceTrigger=PropertyChanged}" h:DefaultText.Value="{Binding MatchText}"
+                 ToolTip="Button colour / details - type to replace &quot;T-shirts match&quot;"/>
+      </Grid>
+
+      <!-- Piping (optional): [checkbox + label] [text: "No piping" until ticked, then type the piping details / colour] -->
+      <Label Grid.Row="5" Style="{StaticResource SpecLabel}">
+        <DockPanel>
+          <CheckBox Style="{StaticResource EditOnlyCheck}" IsChecked="{Binding HasPiping, Mode=TwoWay}" ToolTip="Tick if this order has piping"/>
+          <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left"><TextBlock Style="{StaticResource LabelText}" Text="Piping &amp; Piping Color:"/></Viewbox>
+        </DockPanel>
+      </Label>
+      <Grid Grid.Row="5" Grid.Column="1">
+        <TextBox Style="{StaticResource RoundBox}" Text="{Binding PipingText, UpdateSourceTrigger=PropertyChanged}"
+                 Visibility="{Binding HasPiping, Converter={StaticResource BoolToVis}}" ToolTip="Piping details / colour"/>
+        <TextBlock Text="type piping details / colour…" Style="{StaticResource EmptyHint}"
+                   Visibility="{Binding ShowPipingHint, Converter={StaticResource BoolToVis}}"/>
+        <Border Style="{StaticResource RoundShell}" Visibility="{Binding NoPiping, Converter={StaticResource BoolToVis}}">
+          <TextBlock Text="No piping" FontSize="10.5" FontStyle="Italic" Foreground="#8A8F98" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+      </Grid>
+
+      <!-- Shown only when the customer is "A&amp;M" -->
+      <Label Grid.Row="6" Content="Collar size label:" Style="{StaticResource SpecLabel}" Height="18"
+             Visibility="{Binding ShowCollarLabel, Converter={StaticResource BoolToVis}}"/>
+      <TextBox Grid.Row="6" Grid.Column="1" Style="{StaticResource SpecBox}" Height="18" Text="{Binding CollarSizeLabel, UpdateSourceTrigger=PropertyChanged}"
+               Visibility="{Binding ShowCollarLabel, Converter={StaticResource BoolToVis}}"/>
+    </Grid>
+  </Border>
+</UserControl>

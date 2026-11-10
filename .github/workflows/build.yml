@@ -1,0 +1,131 @@
+# NEX ORDER DESK - test build (no release is made)
+#
+# Runs on every push to a branch (not on version tags - those use release.yml) and can be started by hand.
+# On a clean Windows PC in GitHub's cloud it:
+#   1. builds the app, both MSI installers, both one-click setups and update.json (same script as a release)
+#   2. installs with the offline setup exactly like a user would (silently), checks version, folder and shortcuts
+#   3. starts the installed app and checks that its window opens without errors
+#   4. installs again with the MSI (upgrade path) and checks there is still only one entry in "Apps"
+#   5. tries the online setup (shows whether the newest GitHub release can be downloaded and verified)
+#   6. uninstalls and checks the user's data folder was left alone
+# The built files can be downloaded from the run page (Artifacts).
+
+name: Test build
+
+on:
+  push:
+    branches: ['**']
+    tags-ignore: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build everything
+        shell: pwsh
+        run: |
+          $ok = $true
+          try { ./tools/build-release.ps1 -Repository '${{ github.repository }}' *>&1 | Tee-Object -FilePath build.log }
+          catch { $ok = $false; Add-Content build.log "SCRIPT STOPPED: $_" }
+          if (-not $ok -or -not (Test-Path release/update.json)) {
+            $lines = Select-String -Path build.log -Pattern ': error |error MSB|error WIX|SCRIPT STOPPED|Exception' |
+                     Select-Object -Last 25 | ForEach-Object { $_.Line.Trim() -replace '%', '%25' }
+            Write-Host ("::error title=Build failed::" + ($lines -join '%0A'))
+            exit 1
+          }
+          Get-ChildItem release | ForEach-Object { Write-Host ("{0,-40} {1,12:N0}" -f $_.Name, $_.Length) }
+
+      - name: Keep the built files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NexOrderDesk-test-build
+          path: |
+            release/*
+            build.log
+          if-no-files-found: ignore
+
+      - name: Install with the offline setup (like a user)
+        shell: pwsh
+        run: |
+          $userData = Join-Path $env:LOCALAPPDATA 'NexOrderDesk'
+          New-Item -ItemType Directory -Force -Path $userData | Out-Null
+          Set-Content (Join-Path $userData 'keep-me.txt') 'user data must survive install, update and uninstall'
+          $p = Start-Process release/NexOrderDesk_Setup_Offline.exe -ArgumentList '/auto', '/nolaunch' -Wait -PassThru
+          $errFile = Join-Path $env:TEMP 'NexOrderDesk_Setup\setup-error.txt'
+          if ($p.ExitCode -ne 0) {
+            $msg = if (Test-Path $errFile) { Get-Content $errFile -Raw } else { 'no message' }
+            Write-Host "::error title=Offline setup failed (exit $($p.ExitCode))::$msg"
+            exit 1
+          }
+          $exe = Join-Path $env:ProgramFiles 'NEX ORDER DESK\NexOrderDesk.exe'
+          if (-not (Test-Path $exe)) { Write-Host "::error::NexOrderDesk.exe not installed"; exit 1 }
+          $v = (Get-Item $exe).VersionInfo.ProductVersion
+          $folder = (Get-ItemProperty 'HKLM:\Software\Promotees\NexOrderDesk' -ErrorAction SilentlyContinue).InstallFolder
+          $lnk = Test-Path (Join-Path ([Environment]::GetFolderPath('CommonDesktopDirectory')) 'NEX ORDER DESK.lnk')
+          $lnk2 = Test-Path (Join-Path ([Environment]::GetFolderPath('Desktop')) 'NEX ORDER DESK.lnk')
+          Write-Host "::notice title=Offline setup OK::installed $v to $folder  (desktop shortcut: $($lnk -or $lnk2))"
+
+      - name: Start the installed app
+        shell: pwsh
+        run: |
+          $exe = Join-Path $env:ProgramFiles 'NEX ORDER DESK\NexOrderDesk.exe'
+          $log = Join-Path $env:LOCALAPPDATA 'NexOrderDesk\error_log.txt'
+          if (Test-Path $log) { Remove-Item $log }
+          $p = Start-Process $exe -PassThru
+          Start-Sleep -Seconds 15
+          $p.Refresh()
+          $title = if (-not $p.HasExited) { $p.MainWindowTitle } else { '' }
+          $problem = ''
+          if ($p.HasExited) { $problem = "the app closed by itself (exit code $($p.ExitCode))" }
+          elseif (Test-Path $log) { $problem = 'the app reported an error: ' + ((Get-Content $log -Raw) -replace "`r?`n", '%0A') }
+          if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
+          if ($problem) { Write-Host "::error title=App start failed::$problem"; exit 1 }
+          Write-Host "::notice title=App starts OK::window title '$title'"
+
+      - name: Install again with the MSI (upgrade path)
+        shell: pwsh
+        run: |
+          $msi = (Get-ChildItem release -Filter '*_Setup.msi' | Select-Object -First 1).FullName
+          $p = Start-Process msiexec.exe -ArgumentList '/i', "`"$msi`"", '/qn', '/norestart', '/l*v', "`"$env:TEMP\msi-upgrade.log`"" -Wait -PassThru
+          if ($p.ExitCode -ne 0 -and $p.ExitCode -ne 3010) {
+            $tail = (Get-Content "$env:TEMP\msi-upgrade.log" -Tail 30) -join '%0A'
+            Write-Host "::error title=MSI reinstall failed ($($p.ExitCode))::$tail"; exit 1
+          }
+          $entries = @(Get-ItemProperty 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue |
+                       Where-Object { $_.DisplayName -eq 'NEX ORDER DESK' })
+          if ($entries.Count -ne 1) { Write-Host "::error::Expected one 'NEX ORDER DESK' entry in Apps, found $($entries.Count)"; exit 1 }
+          Write-Host "::notice title=Upgrade path OK::one entry in Apps, version $($entries[0].DisplayVersion)"
+
+      - name: Try the online setup
+        shell: pwsh
+        run: |
+          $errFile = Join-Path $env:TEMP 'NexOrderDesk_Setup\setup-error.txt'
+          if (Test-Path $errFile) { Remove-Item $errFile }
+          $p = Start-Process release/NexOrderDesk_Setup.exe -ArgumentList '/auto', '/nolaunch' -Wait -PassThru
+          $msg = if (Test-Path $errFile) { Get-Content $errFile -Raw } else { 'installed the newest published release' }
+          if ($p.ExitCode -gt 1) { Write-Host "::error title=Online setup crashed ($($p.ExitCode))::$msg"; exit 1 }
+          Write-Host "::notice title=Online setup (exit $($p.ExitCode))::$msg"
+
+      - name: Uninstall and check user data is kept
+        shell: pwsh
+        run: |
+          $e = Get-ItemProperty 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue |
+               Where-Object { $_.DisplayName -eq 'NEX ORDER DESK' } | Select-Object -First 1
+          $code = $e.PSChildName
+          $p = Start-Process msiexec.exe -ArgumentList '/x', $code, '/qn', '/norestart' -Wait -PassThru
+          if ($p.ExitCode -ne 0 -and $p.ExitCode -ne 3010) { Write-Host "::error::Uninstall failed ($($p.ExitCode))"; exit 1 }
+          if (Test-Path (Join-Path $env:ProgramFiles 'NEX ORDER DESK\NexOrderDesk.exe')) { Write-Host "::error::Program file left behind"; exit 1 }
+          if (-not (Test-Path (Join-Path $env:LOCALAPPDATA 'NexOrderDesk\keep-me.txt'))) { Write-Host "::error::User data was deleted"; exit 1 }
+          Write-Host "::notice title=Uninstall OK::program removed, user data kept"
