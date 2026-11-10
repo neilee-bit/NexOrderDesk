@@ -114,7 +114,8 @@ jobs:
           GH_TOKEN: ${{ secrets.RELEASES_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           $files = @(Get-ChildItem release -File | Where-Object { $_.Name -ne 'RELEASE_NOTES.md' } | ForEach-Object { $_.FullName })
-          $draft = if ($env:AUTO_PUBLISH -eq 'true') { @() } else { @('--draft') }
+          # @( ) keeps this an array: a bare string would be splatted one character at a time (gh: no matches found for `-`)
+          $draft = @(if ($env:AUTO_PUBLISH -ne 'true') { '--draft' })
           gh release view $env:TAG --repo $env:TARGET_REPO *> $null
           if ($LASTEXITCODE -eq 0) {
             Write-Host "Release $env:TAG exists - replacing its files"
