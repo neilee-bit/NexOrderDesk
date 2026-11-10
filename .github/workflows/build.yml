@@ -114,7 +114,7 @@ jobs:
             foreach ($w in $wins) {
               $diag += "WINDOW: $($w.Current.Name)"
               $texts = $w.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition)
-              foreach ($t in $texts) { if ($t.Current.Name) { $diag += "   $($t.Current.ControlType.ProgrammaticName): $($t.Current.Name)" } }
+              foreach ($t in $texts) { if ($t.Current.Name) { $diag += "   $($t.Current.ControlType.ProgrammaticName): $($t.Current.Name -replace "`r?`n", ' / ')" } }
             }
             } catch { $diag += "window scan failed: $_" }
             $log = Join-Path $env:LOCALAPPDATA 'NexOrderDesk\error_log.txt'

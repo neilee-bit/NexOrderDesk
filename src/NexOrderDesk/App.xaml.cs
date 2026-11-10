@@ -19,7 +19,6 @@ public partial class App : Application
         int i = Array.FindIndex(e.Args, a => a.Equals("--selftest", StringComparison.OrdinalIgnoreCase));
         if (i >= 0)
         {
-            StartupUri = null;
             _selfTest = true;
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
             base.OnStartup(e);
@@ -29,6 +28,9 @@ public partial class App : Application
             return;
         }
         base.OnStartup(e);
+        var main = new Views.MainWindow();
+        MainWindow = main;
+        main.Show();
     }
 
     private static void OnUnhandled(object sender, DispatcherUnhandledExceptionEventArgs e)
