@@ -119,7 +119,7 @@ public static class SelfTest
         o.AdultLong.First(e => e.Label == "XL").Quantity = 3;
         o.SubmitCommand.Execute(null); Pump(); Pump();
         var printed = Texts(Render(o));
-        Check("category/sleeve: printed on the submitted sheet", printed.Contains("Gents") && printed.Contains("Lads") && printed.Contains("L/S"),
+        Check("category/sleeve: printed on the submitted sheet", printed.Contains("Gents (L/S)") && printed.Contains("Lads (L/S)"),
               string.Join(" | ", printed.Take(60)));
         Check("category/sleeve: kept after Submit", o.AdultShortColumn.Header == "Gents (L/S)" && o.AdultLongColumn.Header == "Lads (L/S)", "");
         o.EditCommand.Execute(null); Pump();
