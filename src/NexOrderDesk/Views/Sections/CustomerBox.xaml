@@ -5,7 +5,7 @@
              TextChanged="OnTextChanged" PreviewKeyDown="OnKeyDown" PreviewMouseLeftButtonUp="OnBoxClick"
              GotKeyboardFocus="OnGotFocus" LostKeyboardFocus="OnLostFocus"
              ToolTip="Type or pick a customer - new names are allowed and are suggested next time"/>
-    <Popup x:Name="Drop" PlacementTarget="{Binding ElementName=Box}" Placement="Bottom" StaysOpen="True" AllowsTransparency="True"
+    <Popup x:Name="DropPopup" PlacementTarget="{Binding ElementName=Box}" Placement="Bottom" StaysOpen="True" AllowsTransparency="True"
            Focusable="False" PopupAnimation="Fade">
       <Border Background="White" BorderBrush="#E2E4E8" BorderThickness="1" CornerRadius="7" Margin="0,3,8,8" MinWidth="200"
               Effect="{StaticResource SoftShadow}">

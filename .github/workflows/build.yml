@@ -101,8 +101,14 @@ jobs:
           $exe = Join-Path $env:ProgramFiles 'NEX ORDER DESK\NexOrderDesk.exe'
           $out = Join-Path $env:TEMP 'selftest.txt'
           $p = Start-Process $exe -ArgumentList '--selftest', "`"$out`"" -PassThru
-          if (-not $p.WaitForExit(240000)) { Stop-Process -Id $p.Id -Force; Write-Host "::error title=Self-test::did not finish within 4 minutes"; exit 1 }
-          $lines = if (Test-Path $out) { Get-Content $out } else { @('no result file') }
+          $finished = $p.WaitForExit(240000)
+          if (-not $finished) { Stop-Process -Id $p.Id -Force }
+          $lines = if (Test-Path $out) { Get-Content $out | Where-Object { $_ -notmatch '^\s+\. ' } | Select-Object -Last 60 } else { @('no result file') }
+          if (-not $finished) {
+            $tail = (Get-Content $out -ErrorAction SilentlyContinue | Select-Object -Last 8) -join '%0A'
+            Write-Host ("::error title=Self-test did not finish::" + (($lines | ForEach-Object { $_ -replace '%', '%25' }) -join '%0A') + '%0A--- last lines:%0A' + $tail)
+            exit 1
+          }
           $lines | ForEach-Object { Write-Host $_ }
           $body = ($lines | ForEach-Object { $_ -replace '%', '%25' }) -join '%0A'
           if ($p.ExitCode -ne 0) { Write-Host "::error title=Self-test failed (exit $($p.ExitCode))::$body"; exit 1 }

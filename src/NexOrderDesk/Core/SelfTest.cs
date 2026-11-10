@@ -20,22 +20,29 @@ public static class SelfTest
 {
     private static readonly StringBuilder Log = new();
     private static int _failed, _passed;
+    private static string _file = "";
+    private static readonly System.Diagnostics.Stopwatch Clock = System.Diagnostics.Stopwatch.StartNew();
+
+    private static void Step(string name) { Log.AppendLine($"--- {name}  ({Clock.Elapsed.TotalSeconds:0.0} s)"); Flush(); }
+    private static void Flush() { try { File.WriteAllText(_file, Log.ToString()); } catch { } }
 
     public static int Run(string resultFile)
     {
+        _file = resultFile;
         try
         {
             var s = SettingsService.Instance;
-            Coordinator(s, SheetLayout.Tops);
-            Coordinator(s, SheetLayout.Jacket);
-            PrintPdfVisibility(s, SheetLayout.Tops);
-            PrintPdfVisibility(s, SheetLayout.Jacket);
-            CategoryAndSleeve(s);
-            EmptyColumns(s, SheetLayout.Tops);
-            EmptyColumns(s, SheetLayout.Jacket);
-            BottomsStrip(s);
-            Customers(s);
-            CustomerBoxUi(s);
+            Step("coordinator / T-shirt"); Coordinator(s, SheetLayout.Tops);
+            Step("coordinator / jacket"); Coordinator(s, SheetLayout.Jacket);
+            Step("print-pdf / T-shirt"); PrintPdfVisibility(s, SheetLayout.Tops);
+            Step("print-pdf / jacket"); PrintPdfVisibility(s, SheetLayout.Jacket);
+            Step("category and sleeve"); CategoryAndSleeve(s);
+            Step("empty columns / T-shirt"); EmptyColumns(s, SheetLayout.Tops);
+            Step("empty columns / jacket"); EmptyColumns(s, SheetLayout.Jacket);
+            Step("bottoms strip"); BottomsStrip(s);
+            Step("customers"); Customers(s);
+            Step("customer box"); CustomerBoxUi(s);
+            Step("done");
         }
         catch (Exception ex) { Fail("unexpected error: " + ex); }
         Log.Insert(0, $"NEX ORDER DESK {AppInfo.Version} self-test: {_passed} passed, {_failed} failed\n");
@@ -249,6 +256,7 @@ public static class SelfTest
 
     private static void Pump()
     {
+        Log.AppendLine($"      . {Clock.Elapsed.TotalSeconds:0.0} s"); Flush();
         var d = Dispatcher.CurrentDispatcher;
         d.Invoke(() => { }, DispatcherPriority.ContextIdle);
         d.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
@@ -303,6 +311,7 @@ public static class SelfTest
     {
         if (ok) { _passed++; Log.AppendLine("PASS  " + what); }
         else { _failed++; Log.AppendLine("FAIL  " + what + (detail.Length > 0 ? "   [" + detail + "]" : "")); }
+        Flush();
     }
 
     private static void Fail(string what) { _failed++; Log.AppendLine("FAIL  " + what); }

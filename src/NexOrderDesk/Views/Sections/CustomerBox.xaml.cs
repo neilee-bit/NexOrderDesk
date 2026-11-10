@@ -20,7 +20,7 @@ public partial class CustomerBox : UserControl
 
     /// <summary>Current suggestions (also used by the self-test).</summary>
     public IReadOnlyList<string> Suggestions => List.Items.Cast<string>().ToList();
-    public bool IsDropDownOpen => Drop.IsOpen;
+    public bool IsDropDownOpen => DropPopup.IsOpen;
 
     /// <summary>Shows the names matching the text in the box. Returns how many there are.</summary>
     public int ShowSuggestions(string? typed)
@@ -30,7 +30,7 @@ public partial class CustomerBox : UserControl
         if (matches.Count == 1 && string.Equals(matches[0], (typed ?? "").Trim(), StringComparison.OrdinalIgnoreCase)) matches.Clear();
         List.ItemsSource = matches;
         List.SelectedIndex = -1;
-        Drop.IsOpen = matches.Count > 0 && Box.IsKeyboardFocusWithin && Box.IsEnabled && IsHitTestVisibleChain();
+        DropPopup.IsOpen = matches.Count > 0 && Box.IsKeyboardFocusWithin && Box.IsEnabled && IsHitTestVisibleChain();
         return matches.Count;
     }
 
@@ -48,7 +48,7 @@ public partial class CustomerBox : UserControl
         Box.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
         Box.CaretIndex = Box.Text.Length;
         _filling = false;
-        Drop.IsOpen = false;
+        DropPopup.IsOpen = false;
     }
 
     private void OnTextChanged(object sender, TextChangedEventArgs e)
@@ -61,13 +61,13 @@ public partial class CustomerBox : UserControl
 
     private void OnBoxClick(object sender, MouseButtonEventArgs e)
     {
-        if (!Drop.IsOpen) ShowSuggestions(Box.Text);
+        if (!DropPopup.IsOpen) ShowSuggestions(Box.Text);
     }
 
     private void OnLostFocus(object sender, KeyboardFocusChangedEventArgs e)
     {
         // a click on a suggestion is handled before the pop-up closes
-        Dispatcher.BeginInvoke(new Action(() => { if (!Box.IsKeyboardFocusWithin) Drop.IsOpen = false; }), DispatcherPriority.Input);
+        Dispatcher.BeginInvoke(new Action(() => { if (!Box.IsKeyboardFocusWithin) DropPopup.IsOpen = false; }), DispatcherPriority.Input);
     }
 
     private void OnKeyDown(object sender, KeyEventArgs e)
@@ -75,12 +75,12 @@ public partial class CustomerBox : UserControl
         switch (e.Key)
         {
             case Key.Down:
-                if (!Drop.IsOpen) { ShowSuggestions(Box.Text); if (!Drop.IsOpen) ShowSuggestions(""); }
+                if (!DropPopup.IsOpen) { ShowSuggestions(Box.Text); if (!DropPopup.IsOpen) ShowSuggestions(""); }
                 if (List.Items.Count > 0) { List.SelectedIndex = Math.Min(List.SelectedIndex + 1, List.Items.Count - 1); List.ScrollIntoView(List.SelectedItem); }
                 e.Handled = true;
                 break;
             case Key.Up:
-                if (Drop.IsOpen && List.Items.Count > 0)
+                if (DropPopup.IsOpen && List.Items.Count > 0)
                 {
                     List.SelectedIndex = Math.Max(List.SelectedIndex - 1, 0);
                     List.ScrollIntoView(List.SelectedItem);
@@ -89,11 +89,11 @@ public partial class CustomerBox : UserControl
                 break;
             case Key.Enter:
             case Key.Tab:
-                if (Drop.IsOpen && List.SelectedItem is string pick) { Accept(pick); e.Handled = e.Key == Key.Enter; }
-                else Drop.IsOpen = false;
+                if (DropPopup.IsOpen && List.SelectedItem is string pick) { Accept(pick); e.Handled = e.Key == Key.Enter; }
+                else DropPopup.IsOpen = false;
                 break;
             case Key.Escape:
-                if (Drop.IsOpen) { Drop.IsOpen = false; e.Handled = true; }
+                if (DropPopup.IsOpen) { DropPopup.IsOpen = false; e.Handled = true; }
                 break;
         }
     }
@@ -106,7 +106,7 @@ public partial class CustomerBox : UserControl
 
     private void OnManage(object sender, RoutedEventArgs e)
     {
-        Drop.IsOpen = false;
+        DropPopup.IsOpen = false;
         Dispatcher.BeginInvoke(new Action(() => OptionsManager.Show("customers")), DispatcherPriority.Background);
     }
 }
