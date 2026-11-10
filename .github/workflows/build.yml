@@ -101,12 +101,33 @@ jobs:
           $exe = Join-Path $env:ProgramFiles 'NEX ORDER DESK\NexOrderDesk.exe'
           $out = Join-Path $env:TEMP 'selftest.txt'
           $p = Start-Process $exe -ArgumentList '--selftest', "`"$out`"" -PassThru
-          $finished = $p.WaitForExit(240000)
-          if (-not $finished) { Stop-Process -Id $p.Id -Force }
+          $finished = $p.WaitForExit(150000)
+          if (-not $finished) {
+            $diag = @()
+            $p.Refresh()
+            $diag += "Window title: '$($p.MainWindowTitle)'"
+            try {
+            Add-Type -AssemblyName UIAutomationClient
+            $root = [System.Windows.Automation.AutomationElement]::RootElement
+            $cond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ProcessIdProperty, $p.Id)
+            $wins = $root.FindAll([System.Windows.Automation.TreeScope]::Children, $cond)
+            foreach ($w in $wins) {
+              $diag += "WINDOW: $($w.Current.Name)"
+              $texts = $w.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition)
+              foreach ($t in $texts) { if ($t.Current.Name) { $diag += "   $($t.Current.ControlType.ProgrammaticName): $($t.Current.Name)" } }
+            }
+            } catch { $diag += "window scan failed: $_" }
+            $log = Join-Path $env:LOCALAPPDATA 'NexOrderDesk\error_log.txt'
+            if (Test-Path $log) { $diag += '--- error_log.txt'; $diag += (Get-Content $log -Tail 30) }
+            Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = (Get-Date).AddMinutes(-6) } -ErrorAction SilentlyContinue |
+              Where-Object { $_.ProviderName -in '.NET Runtime', 'Application Error', 'Windows Error Reporting' } |
+              Select-Object -First 3 | ForEach-Object { $diag += "--- event $($_.ProviderName)"; $diag += ($_.Message -split "`n" | Select-Object -First 25) }
+            Stop-Process -Id $p.Id -Force
+          }
           $lines = if (Test-Path $out) { Get-Content $out | Where-Object { $_ -notmatch '^\s+\. ' } | Select-Object -Last 60 } else { @('no result file') }
           if (-not $finished) {
             $tail = (Get-Content $out -ErrorAction SilentlyContinue | Select-Object -Last 8) -join '%0A'
-            Write-Host ("::error title=Self-test did not finish::" + (($lines | ForEach-Object { $_ -replace '%', '%25' }) -join '%0A') + '%0A--- last lines:%0A' + $tail)
+            Write-Host ("::error title=Self-test did not finish::" + (($lines | ForEach-Object { $_ -replace '%', '%25' }) -join '%0A') + '%0A--- last lines:%0A' + $tail + '%0A' + (($diag | ForEach-Object { "$_" -replace '%', '%25' -replace "`r", '' }) -join '%0A'))
             exit 1
           }
           $lines | ForEach-Object { Write-Host $_ }

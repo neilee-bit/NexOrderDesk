@@ -24,6 +24,7 @@ public partial class App : Application
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
             base.OnStartup(e);
             var file = i + 1 < e.Args.Length ? e.Args[i + 1] : Path.Combine(Path.GetTempPath(), "NexOrderDesk_selftest.txt");
+            try { File.WriteAllText(file, "started\n"); } catch { }
             Dispatcher.BeginInvoke(new Action(() => Shutdown(NexOrderDesk.Core.SelfTest.Run(file))), DispatcherPriority.Loaded);
             return;
         }
