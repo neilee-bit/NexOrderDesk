@@ -3,9 +3,12 @@
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
       <Button Style="{StaticResource ActionButton}" Width="132" Margin="0,0,10,0" Content="{Binding FlipText}"
               Command="{Binding FlipCommand}" ToolTip="Flip the sheet to its other side"/>
-      <Button Style="{StaticResource ActionButton}" Width="96" Margin="0,0,10,0" Content="&#x1F5A8;  Print" Command="{Binding PrintCommand}"
+      <!-- Print / PDF appear only once the order is submitted (hidden while creating or editing) -->
+      <Button x:Name="PrintButton" Style="{StaticResource ActionButton}" Width="96" Margin="0,0,10,0" Content="&#x1F5A8;  Print" Command="{Binding PrintCommand}"
+              Visibility="{Binding IsEditable, Converter={StaticResource InvBoolToVis}}"
               ToolTip="Print with preview: single A4, two copies, double-sided, A5 or half A4 (Ctrl+P)"/>
-      <Button Style="{StaticResource ActionButton}" Width="96" Margin="0,0,10,0" Content="&#x1F4C4;  PDF" Command="{Binding PdfCommand}"
+      <Button x:Name="PdfButton" Style="{StaticResource ActionButton}" Width="96" Margin="0,0,10,0" Content="&#x1F4C4;  PDF" Command="{Binding PdfCommand}"
+              Visibility="{Binding IsEditable, Converter={StaticResource InvBoolToVis}}"
               ToolTip="Save as PDF with the same layouts and an A4 preview"/>
       <Button Style="{StaticResource PrimaryButton}" Width="104" Margin="0,0,10,0" Content="&#x2714;  Submit"
               Command="{Binding SubmitCommand}" ToolTip="Lock the sheet and save its PDF to Documents\NexOrderDesk Orders automatically"/>

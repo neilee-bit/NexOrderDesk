@@ -59,6 +59,9 @@ public class OrderViewModel : ObservableObject
         RebuildPrintMethods(true);
         _s.PrintTypes.CollectionChanged += (_, _) => RebuildPrintMethods(false);
         _s.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(SettingsService.LastOrderNumber)) OnPropertyChanged(nameof(LastOrderText)); };
+        // the coordinator list reloaded (Import options / list edited): show the saved coordinator again in the drop-down
+        _s.Coordinators.CollectionChanged += (_, _) => System.Windows.Application.Current?.Dispatcher.BeginInvoke(
+            new Action(() => OnPropertyChanged(nameof(Coordinator))), System.Windows.Threading.DispatcherPriority.Background);
 
         // ---- bottoms tick-box lists ----
         Pockets = new ObservableCollection<CheckOption>();
@@ -111,19 +114,32 @@ public class OrderViewModel : ObservableObject
         RemoveFlagSizeCommand = new RelayCommand(p => { if (p is FlagSizeEntry f && FlagSizes.Count > 1) FlagSizes.Remove(f); }, _ => IsEditable);
         SetUnitCommand = new RelayCommand(p => { if (p is string u) FlagUnit = u; }, _ => IsEditable);
 
+        // adult columns: category (Adults / Unisex / Gents / Lads) and sleeve (S/S / L/S) are chosen in their headers
+        AdultShortColumn = SizeColumn.Adult("Adults", "S/S", AdultShortView);
+        AdultLongColumn = SizeColumn.Adult("Adults", "L/S", AdultLongView);
         SizeColumns = IsBottoms
             ? new ObservableCollection<SizeColumn> { new("Size Breakdown", BottomSizesView) }
             : IsJacket
-                ? new ObservableCollection<SizeColumn> { new("Adults (S/S)", AdultShortView), new("Adults (L/S)", AdultLongView) }
-                : new ObservableCollection<SizeColumn> { new("Adults (S/S)", AdultShortView), new("Adults (L/S)", AdultLongView), new("Kids (S/S)", KidsView) };
+                ? new ObservableCollection<SizeColumn> { AdultShortColumn, AdultLongColumn }
+                : new ObservableCollection<SizeColumn> { AdultShortColumn, AdultLongColumn, new("Kids (S/S)", KidsView) };
+        // submitted sheet / print / PDF: size columns without any quantity are left out; the others share the width
+        SizeColumnsView = new ListCollectionView(SizeColumns) { Filter = o => IsEditable || o is not SizeColumn c || c.HasData || !SizeColumns.Any(x => x.HasData) };
 
         FlipCommand = new RelayCommand(_ => IsBackSide = !IsBackSide);
-        PrintCommand = new RelayCommand(_ => Views.PrintPreviewWindow.Open(this, false));
-        PdfCommand = new RelayCommand(_ => Views.PrintPreviewWindow.Open(this, true));
+        // Print / PDF only for submitted orders (the buttons are hidden while the order is being created or edited)
+        PrintCommand = new RelayCommand(_ => { if (CanOutput()) Views.PrintPreviewWindow.Open(this, false); }, _ => !IsEditable);
+        PdfCommand = new RelayCommand(_ => { if (CanOutput()) Views.PrintPreviewWindow.Open(this, true); }, _ => !IsEditable);
         OpenDocumentsCommand = new RelayCommand(_ => SheetOutput.OpenFolder(LastPdfPath));
 
         SubmitCommand = new RelayCommand(_ => Submit(), _ => IsEditable);
         EditCommand = new RelayCommand(_ => IsEditable = true, _ => !IsEditable);
+    }
+
+    private bool CanOutput()
+    {
+        if (!IsEditable) return true;
+        ShowStatus("Submit the order first - Print and PDF are available for submitted orders", 5);
+        return false;
     }
 
     private static string Pick(IList<string> list, string preferred) =>
@@ -204,7 +220,12 @@ public class OrderViewModel : ObservableObject
         get => _customer;
         set { if (Set(ref _customer, value ?? "")) OnPropertyChanged(nameof(ShowCollarLabel)); }
     }
-    public string Coordinator { get => _coordinator; set => Set(ref _coordinator, value ?? ""); }
+    /// <summary>
+    /// Selected coordinator. A drop-down sends "nothing" (null) when its list is not ready yet - this happened every time the
+    /// sheet was drawn for Submit / Print / PDF, and it erased the coordinator. Null is now ignored (like every other
+    /// drop-down on the sheet); the value only changes when a coordinator is actually picked.
+    /// </summary>
+    public string Coordinator { get => _coordinator; set { if (value != null) Set(ref _coordinator, value); } }
     public string Notes { get => _notes; set => Set(ref _notes, value ?? ""); }
 
     /// <summary>Pictures in the front-sheet image cards (movable / resizable, several per card).</summary>
@@ -443,6 +464,10 @@ public class OrderViewModel : ObservableObject
     public ICollectionView BottomSizesView { get; }
     public ICollectionView OptionalSizesView { get; }
     public ICommand AddOptionalSizeCommand { get; }
+    public SizeColumn AdultShortColumn { get; }
+    public SizeColumn AdultLongColumn { get; }
+    /// <summary>What the size table shows: every column while editing; on the submitted sheet only columns with quantities.</summary>
+    public ICollectionView SizeColumnsView { get; }
     /// <summary>Columns shown in the size table. Tops: Adults S/S, Adults L/S, Kids S/S (+ PS). Bottoms: Size Breakdown (+ Optional sizes).</summary>
     public ObservableCollection<SizeColumn> SizeColumns { get; }
 
@@ -519,6 +544,15 @@ public class OrderViewModel : ObservableObject
     /// <summary>Bottoms size strip (XS..4XL then the optional sizes), shown left-to-right with the total beside it.</summary>
     public ObservableCollection<SizeEntry> BottomStrip { get; }
     public ICollectionView BottomStripView { get; }
+    /// <summary>
+    /// Submitted bottoms sheet: the filled sizes keep a normal cell width and sit right next to the total
+    /// (instead of a few very wide cells far away from it). While editing the strip uses the full width.
+    /// </summary>
+    public bool BottomStripCompact => !IsEditable && FilledBottomSizes * BottomCellWidth <= 300;
+    /// <summary>Width of the size cells on a compact submitted strip (NaN = automatic: full width).</summary>
+    public double BottomStripWidth => BottomStripCompact ? FilledBottomSizes * BottomCellWidth : double.NaN;
+    private const double BottomCellWidth = 64;
+    private int FilledBottomSizes => Math.Max(1, BottomStrip.Count(e => e.IsActive && e.HasQuantity));
 
     // ---- flags ----
     public ObservableCollection<FlagSizeEntry> FlagSizes { get; }
@@ -571,7 +605,8 @@ public class OrderViewModel : ObservableObject
             if (!Set(ref _isEditable, value)) return;
             AdultShortView.Refresh(); AdultLongView.Refresh(); KidsView.Refresh(); PreschoolView.Refresh();
             BottomSizesView.Refresh(); OptionalSizesView.Refresh(); PrintMethodsView.Refresh(); ExtrasView.Refresh();
-            BottomStripView.Refresh(); FlagSizesView.Refresh(); JacketExtrasView.Refresh();
+            BottomStripView.Refresh(); FlagSizesView.Refresh(); JacketExtrasView.Refresh(); SizeColumnsView.Refresh();
+            OnPropertyChanged(nameof(BottomStripCompact)); OnPropertyChanged(nameof(BottomStripWidth));
             OnPropertyChanged(nameof(SizeRowCount)); OnPropertyChanged(nameof(ShowNoExtras)); OnPropertyChanged(nameof(ShowNoJacketExtras));
         }
     }
@@ -607,7 +642,10 @@ public class OrderViewModel : ObservableObject
     /// </summary>
     private void Submit()
     {
-        if (int.TryParse(OrderNumber.Trim(), out var n)) { _s.LastOrderNumber = n; _s.Save(); }
+        if (int.TryParse(OrderNumber.Trim(), out var n)) _s.LastOrderNumber = n;
+        Customer = Customer.Trim();
+        _s.RememberCustomer(Customer);          // new customers are suggested next time
+        _s.Save();
         IsEditable = false;
         ShowStatus($"\u2714  Order #{OrderNumber} submitted", 6);
         System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>

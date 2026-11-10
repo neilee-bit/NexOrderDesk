@@ -1,0 +1,33 @@
+<UserControl x:Class="NexOrderDesk.Views.Sections.CustomerBox" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Customer name with suggestions: click or type to see matching customers; any new name can still be typed. -->
+  <Grid>
+    <TextBox x:Name="Box" Style="{StaticResource ValueBox}" Text="{Binding Customer, UpdateSourceTrigger=PropertyChanged}"
+             TextChanged="OnTextChanged" PreviewKeyDown="OnKeyDown" PreviewMouseLeftButtonUp="OnBoxClick"
+             GotKeyboardFocus="OnGotFocus" LostKeyboardFocus="OnLostFocus"
+             ToolTip="Type or pick a customer - new names are allowed and are suggested next time"/>
+    <Popup x:Name="Drop" PlacementTarget="{Binding ElementName=Box}" Placement="Bottom" StaysOpen="True" AllowsTransparency="True"
+           Focusable="False" PopupAnimation="Fade">
+      <Border Background="White" BorderBrush="#E2E4E8" BorderThickness="1" CornerRadius="7" Margin="0,3,8,8" MinWidth="200"
+              Effect="{StaticResource SoftShadow}">
+        <StackPanel>
+          <ListBox x:Name="List" BorderThickness="0" MaxHeight="232" Focusable="False" Padding="2"
+                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" PreviewMouseLeftButtonUp="OnPick">
+            <ListBox.ItemContainerStyle>
+              <Style TargetType="ListBoxItem">
+                <Setter Property="Focusable" Value="False"/>
+                <Setter Property="Padding" Value="9,5"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Cursor" Value="Hand"/>
+              </Style>
+            </ListBox.ItemContainerStyle>
+          </ListBox>
+          <Border BorderBrush="#E5E5E5" BorderThickness="0,1,0,0">
+            <Button Content="+ Add / edit customer list…" Click="OnManage" Padding="9,5" FontSize="10" FontWeight="SemiBold" Cursor="Hand"
+                    Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Focusable="False"
+                    Foreground="{DynamicResource AccentDarkBrush}"/>
+          </Border>
+        </StackPanel>
+      </Border>
+    </Popup>
+  </Grid>
+</UserControl>

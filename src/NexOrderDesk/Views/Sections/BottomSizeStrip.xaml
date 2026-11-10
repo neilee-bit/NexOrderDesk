@@ -31,7 +31,17 @@
       </DockPanel>
 
       <!-- sizes side by side -->
-      <ItemsControl Grid.Row="1" ItemsSource="{Binding BottomStripView}" Margin="6,4,6,6">
+      <!-- submitted: only filled sizes, normal cell width, right next to the total (BottomStripCompact) -->
+      <ItemsControl Grid.Row="1" ItemsSource="{Binding BottomStripView}" Margin="6,4,6,6"
+                    Width="{Binding BottomStripWidth}">
+        <ItemsControl.Style>
+          <Style TargetType="ItemsControl">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding BottomStripCompact}" Value="True"><Setter Property="HorizontalAlignment" Value="Right"/></DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </ItemsControl.Style>
         <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="{x:Type m:SizeEntry}">

@@ -95,6 +95,19 @@ jobs:
           if ($problem) { Write-Host "::error title=App start failed::$problem"; exit 1 }
           Write-Host "::notice title=App starts OK::window title '$title'"
 
+      - name: Self-test of the order sheet (coordinator, Print/PDF, sizes, customers)
+        shell: pwsh
+        run: |
+          $exe = Join-Path $env:ProgramFiles 'NEX ORDER DESK\NexOrderDesk.exe'
+          $out = Join-Path $env:TEMP 'selftest.txt'
+          $p = Start-Process $exe -ArgumentList '--selftest', "`"$out`"" -PassThru
+          if (-not $p.WaitForExit(240000)) { Stop-Process -Id $p.Id -Force; Write-Host "::error title=Self-test::did not finish within 4 minutes"; exit 1 }
+          $lines = if (Test-Path $out) { Get-Content $out } else { @('no result file') }
+          $lines | ForEach-Object { Write-Host $_ }
+          $body = ($lines | ForEach-Object { $_ -replace '%', '%25' }) -join '%0A'
+          if ($p.ExitCode -ne 0) { Write-Host "::error title=Self-test failed (exit $($p.ExitCode))::$body"; exit 1 }
+          Write-Host "::notice title=Self-test passed::$body"
+
       - name: Install again with the MSI (upgrade path)
         shell: pwsh
         run: |

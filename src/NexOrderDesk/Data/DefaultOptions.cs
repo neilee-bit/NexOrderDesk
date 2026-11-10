@@ -18,6 +18,8 @@ public class OrderTypeDto
 public class SettingsDto
 {
     public List<string>? Coordinators { get; set; }
+    /// <summary>Customer names suggested while typing in "Customer" (2.8). Grows by itself with every submitted order.</summary>
+    public List<string>? Customers { get; set; }
     public List<string>? Materials { get; set; }
     public List<string>? NeckTypes { get; set; }
     public List<string>? SleeveTypes { get; set; }
@@ -70,9 +72,24 @@ public static class DefaultOptions
     /// <summary>Shown in "Placket Type &amp; Color" / "Button &amp; Button Color" until something is typed.</summary>
     public const string MatchText = "T-shirts match";
 
+    /// <summary>Garment category of the adult size columns (2.8).</summary>
+    public static string[] GarmentCategories { get; } = { "Adults", "Unisex", "Gents", "Lads" };
+    /// <summary>Sleeve type of the adult size columns (2.8).</summary>
+    public static string[] GarmentSleeves { get; } = { "S/S", "L/S" };
+
+    /// <summary>Customer suggestions shipped with 2.8 (the list can be edited and grows with new customers).</summary>
+    public static List<string> CustomerList() => new()
+    {
+        "Urapola Dinesh", "Nishantha Sir", "Batti", "Shiff", "Rizwaz", "A&M", "Rajarata Clothing Ziyan", "Alwis",
+        "Higuraggoda", "Safran", "Ruwan Haggalla", "Kavee Creations", "Buddhi Giriulla", "Nilanthi", "Dammika Ruwan",
+        "Trinco Dealer", "Mathen", "Chaminda", "Walisinha", "Kanthale Prasangi", "Niranco", "Cap Rashmi", "Linen Apparel",
+        "Wetlook House", "Cap Rashmi Son", "Priyan Apparel", "Dilroo", "Shehan", "Benet"
+    };
+
     public static SettingsDto Create() => new()
     {
         Coordinators = new() { "Dinithi", "Mahindi", "Kaavee", "Senuri" },
+        Customers = CustomerList(),
         Materials = new() { "Wetlook", "Close Hole", "Honeycomb", "Tricot" },
         NeckTypes = new() { "Full Collar", "Round Neck", "Crew Neck", "Round Cross Neck" },
         SleeveTypes = new() { "Hem Sleeve", "Cuff Sleeve", "Wrangler Sleeve" },

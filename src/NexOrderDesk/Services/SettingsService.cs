@@ -11,6 +11,7 @@ public sealed class SettingsService : ObservableObject
 {
     public static SettingsService Instance { get; } = new();
     public ObservableCollection<string> Coordinators { get; } = new();
+    public ObservableCollection<string> Customers { get; } = new();
     public ObservableCollection<string> Materials { get; } = new();
     public ObservableCollection<string> NeckTypes { get; } = new();
     public ObservableCollection<string> SleeveTypes { get; } = new();
@@ -69,6 +70,7 @@ public sealed class SettingsService : ObservableObject
     public (string Title, ObservableCollection<string>? List) GetList(string key) => key switch
     {
         "coordinators" => ("Coordinators", Coordinators),
+        "customers" => ("Customers", Customers),
         "materials" => ("Material types", Materials),
         "necks" => ("Neck types", NeckTypes),
         "sleeves" => ("Sleeve types", SleeveTypes),
@@ -97,7 +99,7 @@ public sealed class SettingsService : ObservableObject
     private void Apply(SettingsDto? d)
     {
         if (d == null) return;
-        Fill(Coordinators, d.Coordinators); Fill(Materials, d.Materials); Fill(NeckTypes, d.NeckTypes);
+        Fill(Coordinators, d.Coordinators); Fill(Customers, d.Customers); Fill(Materials, d.Materials); Fill(NeckTypes, d.NeckTypes);
         Fill(SleeveTypes, d.SleeveTypes); Fill(PrintTypes, d.PrintTypes);
         Fill(BottomTypes, d.BottomTypes); Fill(WaistTypes, d.WaistTypes); Fill(PocketTypes, d.PocketTypes);
         Fill(LegOpenings, d.LegOpenings); Fill(BottomExtras, d.BottomExtras); Fill(FlagMaterials, d.FlagMaterials);
@@ -135,6 +137,13 @@ public sealed class SettingsService : ObservableObject
             _schema = 25;
             Save();
         }
+        if (_schema < 28)
+        {
+            // 2.8: settings files from older versions get the customer suggestion list (names already there are kept)
+            foreach (var c in DefaultOptions.CustomerList()) if (!ContainsName(Customers, c)) Customers.Add(c);
+            _schema = 28;
+            Save();
+        }
     }
 
     private void Upgrade22()
@@ -153,7 +162,7 @@ public sealed class SettingsService : ObservableObject
 
     private SettingsDto ToDto() => new()
     {
-        Coordinators = Coordinators.ToList(), Materials = Materials.ToList(), NeckTypes = NeckTypes.ToList(),
+        Coordinators = Coordinators.ToList(), Customers = Customers.ToList(), Materials = Materials.ToList(), NeckTypes = NeckTypes.ToList(),
         SleeveTypes = SleeveTypes.ToList(), PrintTypes = PrintTypes.ToList(),
         Colors = Colors.Select(c => new ColorDto { Name = c.Name, Hex = c.Hex }).ToList(),
         BottomTypes = BottomTypes.ToList(), WaistTypes = WaistTypes.ToList(), PocketTypes = PocketTypes.ToList(),
@@ -173,6 +182,18 @@ public sealed class SettingsService : ObservableObject
         SchemaVersion = _schema,
         LastOrderNumber = LastOrderNumber
     };
+
+    private static bool ContainsName(IEnumerable<string> list, string name) =>
+        list.Any(x => string.Equals(x.Trim(), name.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Adds a customer typed on a submitted order to the suggestions (once, case-insensitive). Returns true if added.</summary>
+    public bool RememberCustomer(string? name)
+    {
+        var n = (name ?? "").Trim();
+        if (n.Length == 0 || ContainsName(Customers, n)) return false;
+        Customers.Add(n);
+        return true;
+    }
 
     public void Save() { try { Directory.CreateDirectory(Dir); File.WriteAllText(FilePath, JsonSerializer.Serialize(ToDto(), Json)); } catch { } }
     public void ExportTo(string path) => File.WriteAllText(path, JsonSerializer.Serialize(ToDto(), Json));

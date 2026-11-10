@@ -48,11 +48,31 @@
       <TextBox Style="{StaticResource ValueBox}" Text="{Binding OrderName, UpdateSourceTrigger=PropertyChanged}"/>
     </HeaderedContentControl>
     <HeaderedContentControl Grid.Column="3" Style="{StaticResource FieldCard}" Header="Customer" Margin="0,0,8,0">
-      <TextBox Style="{StaticResource ValueBox}" Text="{Binding Customer, UpdateSourceTrigger=PropertyChanged}"/>
+      <s:CustomerBox/>
     </HeaderedContentControl>
     <HeaderedContentControl Grid.Column="4" Style="{StaticResource FieldCard}" Header="Coordinator">
-      <ComboBox Style="{StaticResource FlatCombo}" FontSize="13" FontWeight="Bold" h:ComboHelper.ManageKey="coordinators"
-                ItemsSource="{Binding Settings.Coordinators}" SelectedItem="{Binding Coordinator}"/>
+      <Grid>
+        <!-- editing: pick from the list -->
+        <ComboBox x:Name="CoordinatorCombo" FontSize="13" FontWeight="Bold" h:ComboHelper.ManageKey="coordinators"
+                  ItemsSource="{Binding Settings.Coordinators}" SelectedItem="{Binding Coordinator}">
+          <ComboBox.Style>
+            <Style TargetType="ComboBox" BasedOn="{StaticResource FlatCombo}">
+              <Style.Triggers><Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Visibility" Value="Hidden"/></Trigger></Style.Triggers>
+            </Style>
+          </ComboBox.Style>
+        </ComboBox>
+        <!-- submitted sheet / print / PDF: the saved coordinator name itself, so it always shows -->
+        <Viewbox StretchDirection="DownOnly" Margin="4,0">
+          <TextBlock x:Name="CoordinatorText" Text="{Binding Coordinator}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextBrush}"
+                     VerticalAlignment="Center"/>
+          <Viewbox.Style>
+            <Style TargetType="Viewbox">
+              <Setter Property="Visibility" Value="Collapsed"/>
+              <Style.Triggers><Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Visibility" Value="Visible"/></Trigger></Style.Triggers>
+            </Style>
+          </Viewbox.Style>
+        </Viewbox>
+      </Grid>
     </HeaderedContentControl>
   </Grid>
 </UserControl>

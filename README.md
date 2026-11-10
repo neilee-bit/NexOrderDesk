@@ -1,4 +1,4 @@
-# NEX ORDER DESK 2.7 (native WPF, .NET 8)
+# NEX ORDER DESK 2.8 (native WPF, .NET 8)
 
 Open **NexOrderDesk 2.0 version.sln** in Visual Studio 2022 (workload ".NET desktop development"), set configuration Debug, press F5.
 Or double-click **build.bat** (needs the .NET 8 SDK) - it builds, starts the app, and writes build_errors.txt if anything fails.
@@ -25,6 +25,14 @@ VERSION, INSTALLERS AND ONLINE RELEASES  ->  full guide: RELEASING.md
 - build_release.bat     -> both MSIs + update.json + SHA256SUMS.txt + RELEASE_NOTES.md in the "release" folder
 - GitHub: push a tag like v2.7.1 -> .github/workflows/release.yml builds and uploads everything as a draft release.
 - App icon: src\NexOrderDesk\Assets\app.ico
+
+New in 2.8
+- Fixed: the selected coordinator was erased when the sheet was drawn for Submit / Print / PDF - now always on the order.
+- Print and PDF buttons only appear after Submit (hidden while creating / editing; Ctrl+P too).
+- Adult size columns: category (Adults / Unisex / Gents / Lads) and sleeve (S/S / L/S) drop-downs in the column headers.
+- Submitted sheet / print / PDF: size columns without quantities are left out; bottoms sizes sit next to the total.
+- Customer field suggests customers while typing (29 included, new names remembered, list editable).
+- Self-test: NexOrderDesk.exe --selftest result.txt (run by the GitHub test build on every push).
 
 New in 2.7
 - Online updates via GitHub Releases: "Check for updates" in the top bar, optional check at start-up (small

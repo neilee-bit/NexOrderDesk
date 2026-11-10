@@ -11,9 +11,11 @@ public class SizeEntry : ObservableObject
     private bool _isActive;
     private string _label;
     public SizeEntry(string label, string sleeveTag, bool isPlaceholder = false, bool isCustom = false)
-    { _label = label; SleeveTag = sleeveTag; IsPreschool = isPlaceholder; IsCustom = isCustom; _isActive = !isPlaceholder; }
+    { _label = label; _sleeveTag = sleeveTag; IsPreschool = isPlaceholder; IsCustom = isCustom; _isActive = !isPlaceholder; }
     public string Label { get => _label; set => Set(ref _label, value ?? ""); }
-    public string SleeveTag { get; }
+    private string _sleeveTag;
+    /// <summary>"S/S" or "L/S" - printed next to the quantity on the submitted sheet (adult columns follow their sleeve choice).</summary>
+    public string SleeveTag { get => _sleeveTag; set => Set(ref _sleeveTag, value ?? ""); }
     /// <summary>True for rows that start hidden (PS sizes / optional sizes).</summary>
     public bool IsPreschool { get; }
     /// <summary>True when the label is editable (optional sizes on the bottoms sheet).</summary>
