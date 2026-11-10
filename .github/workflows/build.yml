@@ -26,9 +26,9 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
 
@@ -44,11 +44,12 @@ jobs:
             Write-Host ("::error title=Build failed::" + ($lines -join '%0A'))
             exit 1
           }
-          Get-ChildItem release | ForEach-Object { Write-Host ("{0,-40} {1,12:N0}" -f $_.Name, $_.Length) }
+          $sizes = (Get-ChildItem release | ForEach-Object { "{0}  {1:N2} MB" -f $_.Name, ($_.Length / 1MB) }) -join '%0A'
+          Write-Host "::notice title=Built files::$sizes"
 
       - name: Keep the built files
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: NexOrderDesk-test-build
           path: |

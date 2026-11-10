@@ -41,12 +41,12 @@ jobs:
       AUTO_PUBLISH: ${{ vars.AUTO_PUBLISH }}
     steps:
       - name: Check out the tagged code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ env.TAG }}
 
       - name: Set up .NET 8 SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
 
@@ -84,7 +84,7 @@ jobs:
           }
 
       - name: Keep the build files (also downloadable from this workflow run)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: NexOrderDesk-${{ env.VERSION }}
           path: release/*

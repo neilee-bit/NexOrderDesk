@@ -6,7 +6,7 @@
     <!-- MSI ProductVersion = $(Version) from Directory.Build.props (or -p:Version=x.y.z from the release scripts) -->
     <DefineConstants>ProductVersion=$(Version)</DefineConstants>
     <!-- shortcut components use the standard HKCU key-path pattern; these validation notes are harmless -->
-    <SuppressIces>ICE38;ICE43;ICE57;ICE64;ICE91</SuppressIces>
+    <SuppressIces>ICE38;ICE43;ICE57;ICE61;ICE64;ICE69;ICE91</SuppressIces>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
