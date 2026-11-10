@@ -22,7 +22,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Version tag to build, e.g. v2.7.1 (the tag must already exist)'
+        description: 'Version to release, e.g. v2.7.1 (if the tag does not exist yet it is created on the chosen branch)'
         required: true
 
 permissions:
@@ -40,10 +40,29 @@ jobs:
       RELEASES_REPO: ${{ vars.RELEASES_REPO }}
       AUTO_PUBLISH: ${{ vars.AUTO_PUBLISH }}
     steps:
-      - name: Check out the tagged code
+      - name: Check out the code
         uses: actions/checkout@v5
-        with:
-          ref: ${{ env.TAG }}
+
+      # Started by hand (Actions -> Release -> Run workflow): use the tag if it exists,
+      # otherwise create it on the branch chosen in the "Run workflow" box (normally main).
+      - name: Use or create the version tag
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: |
+          if ($env:TAG -notmatch '^v\d+\.\d+\.\d+$') { throw "Tag '$env:TAG' must look like v2.7.1" }
+          git ls-remote --exit-code --tags origin "refs/tags/$env:TAG" *> $null
+          if ($LASTEXITCODE -eq 0) {
+            git fetch --depth 1 origin "refs/tags/$($env:TAG):refs/tags/$($env:TAG)"
+            git checkout --quiet $env:TAG
+            Write-Host "Building the existing tag $env:TAG"
+          } else {
+            git config user.name 'github-actions[bot]'
+            git config user.email 'github-actions[bot]@users.noreply.github.com'
+            git tag -a $env:TAG -m "NEX ORDER DESK $($env:TAG.Substring(1))"
+            git push origin "refs/tags/$env:TAG"
+            if ($LASTEXITCODE -ne 0) { throw "Could not create the tag $env:TAG" }
+            Write-Host "Created tag $env:TAG on ${{ github.ref_name }} ($(git rev-parse --short HEAD))"
+          }
 
       - name: Set up .NET 8 SDK
         uses: actions/setup-dotnet@v5

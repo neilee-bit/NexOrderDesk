@@ -113,6 +113,9 @@ settings. From then on every PC updates itself.
    git push origin v2.7.0
    ```
    (GitHub Desktop: *History → right-click the commit → Create Tag… v2.7.0*, then *Push origin*.)
+
+   **Or without git, in the browser:** GitHub → **Actions** → **Release** → **Run workflow** →
+   branch `main`, version `v2.7.0` → **Run workflow**. It creates the tag itself and continues the same way.
 4. GitHub → **Actions** → watch **Release** (about 5–10 minutes). Green tick = done.
    If it fails, open the red step and send me the error lines.
 5. GitHub → **Releases** → **Draft: NEX ORDER DESK 2.7.0**. Check that it has 7 files
