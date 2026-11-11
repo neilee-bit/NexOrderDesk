@@ -139,6 +139,18 @@ jobs:
           if ($p.ExitCode -ne 0) { Write-Host "::error title=Self-test failed (exit $($p.ExitCode))::$body"; exit 1 }
           Write-Host "::notice title=Self-test passed::$body"
 
+      - name: Layout pictures from the self-test
+        if: always()
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:TEMP 'NexOrderDesk_shots'
+          if (Test-Path $dir) {
+            Get-ChildItem $dir -Filter *.jpg | Select-Object -First 9 | ForEach-Object {
+              $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($_.FullName))
+              if ($b64.Length -lt 60000) { Write-Host "::notice title=shot $($_.BaseName)::$b64" } else { Write-Host "$($_.Name) too big for a note ($($b64.Length))" }
+            }
+          }
+
       - name: Install again with the MSI (upgrade path)
         shell: pwsh
         run: |

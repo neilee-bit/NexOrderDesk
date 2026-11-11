@@ -416,6 +416,7 @@ public static class SelfTest
     {
         var o = new OrderViewModel(t, s, 9700) { OrderName = "SELFTEST CLIP" };
         var live = Host(o);
+        if (tag.Length > 0) Shot(live, t.Name);
         var c = Clipped(live);
         Check($"{t.Name}{tag}: nothing cut off while editing", c.Count == 0, string.Join("; ", c.Take(6)));
         if (tag.Length > 0 && o.IsGarment) SelectionRun(o, live, t.Name);
@@ -456,6 +457,36 @@ public static class SelfTest
         Check($"{name}: submitted sheet shows exactly the chosen print types", chosen.All(c => pt.Any(x => x.Contains(c, StringComparison.OrdinalIgnoreCase))) &&
               !o.PrintMethods.Where(m => !m.IsSelected).Any(m => pt.Contains(m.Name)), string.Join(" + ", chosen) + " / " + o.PrintSummary);
         o.EditCommand.Execute(null); Pump();
+    }
+
+    /// <summary>Picture of the specs + print-type area (left column) for checking the layout by eye (test build only).</summary>
+    private static void Shot(FrameworkElement root, string name)
+    {
+        try
+        {
+            var print = FindAll<PrintMethodPanel>(root).FirstOrDefault(IsShown);
+            if (print == null) return;
+            FrameworkElement? top = FindAll<GarmentSpecsPanel>(root).FirstOrDefault(IsShown) as FrameworkElement
+                                    ?? FindAll<JacketSpecsPanel>(root).FirstOrDefault(IsShown) as FrameworkElement
+                                    ?? FindAll<BottomSpecsPanel>(root).FirstOrDefault(IsShown);
+            var r1 = print.TransformToAncestor(root).TransformBounds(new Rect(print.RenderSize));
+            var r = top == null ? r1 : Rect.Union(r1, top.TransformToAncestor(root).TransformBounds(new Rect(top.RenderSize)));
+            r.Inflate(4, 4);
+            double k = 1.6;
+            var bmp = new RenderTargetBitmap((int)(root.ActualWidth * k), (int)(root.ActualHeight * k), 96 * k, 96 * k, PixelFormats.Pbgra32);
+            var bg = new DrawingVisual();
+            using (var dc = bg.RenderOpen()) dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
+            bmp.Render(bg); bmp.Render(root);
+            var crop = new CroppedBitmap(bmp, new Int32Rect((int)Math.Max(0, r.X * k), (int)Math.Max(0, r.Y * k),
+                (int)Math.Min(r.Width * k, bmp.PixelWidth - Math.Max(0, r.X * k)), (int)Math.Min(r.Height * k, bmp.PixelHeight - Math.Max(0, r.Y * k))));
+            var enc = new JpegBitmapEncoder { QualityLevel = 72 };
+            enc.Frames.Add(BitmapFrame.Create(crop));
+            var dir = Path.Combine(Path.GetTempPath(), "NexOrderDesk_shots");
+            Directory.CreateDirectory(dir);
+            using var f = File.Create(Path.Combine(dir, new string(name.Where(char.IsLetterOrDigit).ToArray()) + ".jpg"));
+            enc.Save(f);
+        }
+        catch { }
     }
 
     private static void Click(ToggleButton b)
