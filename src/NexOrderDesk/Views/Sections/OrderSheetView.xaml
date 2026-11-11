@@ -64,7 +64,8 @@
 
       <!-- ============ BOTTOMS / SHORTS: prominent colour, small print panel, horizontal size strip ============ -->
       <Grid Grid.Row="4" Margin="10,0" IsHitTestVisible="{Binding IsEditable}" Visibility="{Binding IsBottoms, Converter={StaticResource BoolToVis}}">
-        <Grid.ColumnDefinitions><ColumnDefinition Width="49*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="51*"/></Grid.ColumnDefinitions>
+        <!-- 2.9: sizes + notes in a compact column on the right, more width for pictures / material on the left -->
+        <Grid.ColumnDefinitions><ColumnDefinition Width="58*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="42*"/></Grid.ColumnDefinitions>
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="175*"/><RowDefinition Height="6"/><RowDefinition Height="Auto" MinHeight="34"/><RowDefinition Height="6"/>

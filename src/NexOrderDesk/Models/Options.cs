@@ -22,6 +22,24 @@ public class ColorOption : ObservableObject
     public Brush Brush => _brush;
 }
 
+/// <summary>
+/// The "More ▾" button in the print-method box (2.9): when there are more than 8 print types, the first 7 are shown as
+/// buttons and the rest open from here as a second level.
+/// </summary>
+public class MorePrintMethods : ObservableObject
+{
+    private bool _isOpen;
+    private int _selectedCount;
+    public MorePrintMethods(IList<PrintMethodOption> items) { Items = items; Refresh(); }
+    public IList<PrintMethodOption> Items { get; }
+    public bool IsOpen { get => _isOpen; set => Set(ref _isOpen, value); }
+    public int SelectedCount { get => _selectedCount; private set { if (Set(ref _selectedCount, value)) { OnPropertyChanged(nameof(Text)); OnPropertyChanged(nameof(HasSelection)); } } }
+    public bool HasSelection => _selectedCount > 0;
+    /// <summary>"More (4) ▾" - with "· 1 ✓" when one of the hidden types is selected.</summary>
+    public string Text => $"More ({Items.Count})" + (_selectedCount > 0 ? $" · {_selectedCount} \u2713" : "") + " \u25BE";
+    public void Refresh() => SelectedCount = Items.Count(i => i.IsSelected);
+}
+
 public class PrintMethodOption : ObservableObject
 {
     private bool _isSelected;

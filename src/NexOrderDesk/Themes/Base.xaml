@@ -132,7 +132,10 @@
         <ControlTemplate TargetType="ToggleButton">
           <Border x:Name="Bd" CornerRadius="10" Background="#F6F6F6" BorderBrush="#DCDCDC" BorderThickness="1"
                   Effect="{StaticResource SoftShadow}">
-            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <!-- 2.9: long text shrinks to fit the button instead of being cut off -->
+            <Viewbox StretchDirection="DownOnly" Margin="5,1">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Viewbox>
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="Background" Value="#EBEBEB"/></Trigger>

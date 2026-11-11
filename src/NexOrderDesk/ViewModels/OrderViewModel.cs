@@ -442,6 +442,32 @@ public class OrderViewModel : ObservableObject
         }
         if (initial && !PrintMethods.Any(m => m.IsSelected) && PrintMethods.Count > 0) PrintMethods[0].IsSelected = true;
         OnPropertyChanged(nameof(PrintSummary));
+        RebuildPrintGrid();
+    }
+
+    // ---- print-method box (2.9): never more than 8 buttons; extra types open from "More ▾" ----
+    public const int PrintGridMax = 8;
+    /// <summary>What the print-method box shows: the print types (and "More ▾" when there are many). Submitted: only the selected ones.</summary>
+    public ObservableCollection<object> PrintGridItems { get; } = new();
+    public MorePrintMethods? MorePrint { get; private set; }
+    /// <summary>3 columns for up to 6 buttons, 4 columns for 7-8 (bottoms / jackets always 4).</summary>
+    public int PrintGridColumns => PrintGridItems.Count <= 6 ? 3 : 4;
+
+    private void RebuildPrintGrid()
+    {
+        PrintGridItems.Clear();
+        MorePrint = null;
+        if (!IsEditable)
+            foreach (var m in PrintMethods.Where(m => m.IsSelected)) PrintGridItems.Add(m);
+        else if (PrintMethods.Count <= PrintGridMax)
+            foreach (var m in PrintMethods) PrintGridItems.Add(m);
+        else
+        {
+            foreach (var m in PrintMethods.Take(PrintGridMax - 1)) PrintGridItems.Add(m);
+            MorePrint = new MorePrintMethods(PrintMethods.Skip(PrintGridMax - 1).ToList());
+            PrintGridItems.Add(MorePrint);
+        }
+        OnPropertyChanged(nameof(MorePrint)); OnPropertyChanged(nameof(PrintGridColumns));
     }
 
     private void OnPrintMethodChanged(object? sender, PropertyChangedEventArgs e)
@@ -458,6 +484,8 @@ public class OrderViewModel : ObservableObject
                 _busy = false;
             }
         }
+        MorePrint?.Refresh();
+        if (MorePrint != null && o.IsSelected && MorePrint.Items.Contains(o)) MorePrint.IsOpen = false;   // picked from the second level
         OnPropertyChanged(nameof(PrintSummary));
     }
 
@@ -627,7 +655,7 @@ public class OrderViewModel : ObservableObject
             if (!Set(ref _isEditable, value)) return;
             AdultShortView.Refresh(); AdultLongView.Refresh(); KidsView.Refresh(); PreschoolView.Refresh();
             BottomSizesView.Refresh(); OptionalSizesView.Refresh(); PrintMethodsView.Refresh(); ExtrasView.Refresh();
-            FlagSizesView.Refresh(); JacketExtrasView.Refresh(); SizeColumnsView.Refresh();
+            FlagSizesView.Refresh(); JacketExtrasView.Refresh(); SizeColumnsView.Refresh(); RebuildPrintGrid();
             OnPropertyChanged(nameof(SizeRowCount)); OnPropertyChanged(nameof(ShowNoExtras)); OnPropertyChanged(nameof(ShowNoJacketExtras));
         }
     }

@@ -45,6 +45,8 @@ public static class SelfTest
             Step("bold selections"); BoldSelections(s);
             Step("images and long names"); ImagesAndNames(s);
             Step("layout space"); LayoutSpace(s);
+            Step("print grid"); PrintGrid(s);
+            Step("bottoms layout"); BottomsLayout(s);
             Step("material colours"); Colours(s);
             Step("print and press"); PrintPress(s);
             Step("customers"); Customers(s);
@@ -263,6 +265,60 @@ public static class SelfTest
         }
         Check("medium order name fits and stays readable", medFits, box == null ? "not found" : $"font {box.FontSize}, {box.TextWrapping}");
         n.Detach();
+    }
+
+    private static void PrintGrid(SettingsService s)
+    {
+        var saved = s.PrintTypes.ToList();
+        try
+        {
+            while (s.PrintTypes.Count < 8) s.PrintTypes.Add("TEST TYPE " + s.PrintTypes.Count);
+            while (s.PrintTypes.Count > 8) s.PrintTypes.RemoveAt(s.PrintTypes.Count - 1);
+            var o = NewOrder(s, SheetLayout.Tops);
+            Check("print grid: 8 types fit as 8 buttons in 4 columns", o.PrintGridItems.Count == 8 && o.MorePrint == null && o.PrintGridColumns == 4, "");
+            for (int i = 0; i < 4; i++) s.PrintTypes.Add("EXTRA LONG PRINT TYPE NAME " + i);
+            Pump();
+            Check("print grid: more than 8 types - 7 buttons + More", o.PrintGridItems.Count == 8 && o.MorePrint != null && o.MorePrint.Items.Count == 5 &&
+                  o.PrintGridItems.Last() is NexOrderDesk.Models.MorePrintMethods, $"{o.PrintGridItems.Count} {o.MorePrint?.Items.Count}");
+            var live = Host(o);
+            var pills = FindAll<System.Windows.Controls.Primitives.ToggleButton>(FindAll<PrintMethodPanel>(live).First(IsShown)).Where(IsShown).ToList();
+            bool allFit = pills.All(b =>
+            {
+                var vb = FindAll<Viewbox>(b).FirstOrDefault();
+                return vb != null && b.ActualHeight >= 14 && vb.ActualWidth <= b.ActualWidth && vb.ActualHeight <= b.ActualHeight;
+            });
+            Check("print grid: every button's text fits inside it", pills.Count == 8 && allFit, string.Join(", ", pills.Select(b => $"{b.ActualWidth:0}x{b.ActualHeight:0}")));
+            o.MorePrint!.IsOpen = true;
+            var pick = o.MorePrint.Items[2];
+            pick.IsSelected = true; Pump();
+            Check("print grid: a type picked from More is selected and More closes", pick.IsSelected && !o.MorePrint.IsOpen && o.MorePrint.Text.Contains("1") &&
+                  o.PrintSummary.Contains(pick.BannerName), o.PrintSummary);
+            o.SubmitCommand.Execute(null); Pump(); Pump();
+            Check("print grid: submitted sheet shows only the selected types", o.PrintGridItems.Count == o.PrintMethods.Count(m => m.IsSelected) &&
+                  o.PrintGridItems.Contains(pick), o.PrintGridItems.Count.ToString());
+            Close(live, o);
+        }
+        finally
+        {
+            s.PrintTypes.Clear(); foreach (var t in saved) s.PrintTypes.Add(t);
+        }
+    }
+
+    private static void BottomsLayout(SettingsService s)
+    {
+        var o = NewOrder(s, SheetLayout.Bottoms);
+        var live = Host(o);
+        var table = FindAll<SizeTablePanel>(live).First(IsShown);
+        var bar = FindAll<MaterialColorBar>(live).First(IsShown);
+        Check("bottoms: compact size / notes column on the right", table.ActualWidth < 0.45 * 840 && bar.ActualWidth > 0.5 * 820,
+              $"sizes {table.ActualWidth:0}, material bar {bar.ActualWidth:0}");
+        var plain = FindAll<TextBox>(bar).FirstOrDefault(t => t.Name == "PlainColour" && IsShown(t));
+        Check("bottoms: colour is a plain text field, default WHITE, no colour picker",
+              plain != null && plain.Text == "WHITE" && !FindAll<ColorBox>(bar).Any(IsShown), plain?.Text ?? "not found");
+        o.MaterialColors[0].ColorName = "NAVY";
+        var printed = Texts(Render(o));
+        Check("bottoms: typed colour printed", printed.Contains("NAVY"), "");
+        Close(live, o);
     }
 
     private static void LayoutSpace(SettingsService s)

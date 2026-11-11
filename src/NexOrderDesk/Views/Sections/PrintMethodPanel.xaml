@@ -2,7 +2,17 @@
   <!-- Compact="True" (bottoms / shorts): thinner header, smaller pills in 4 columns -->
   <Border Style="{StaticResource Card}" Padding="8,5">
     <Border.Resources>
-      <ItemsPanelTemplate x:Key="ThreeCols"><UniformGrid Columns="3"/></ItemsPanelTemplate>
+      <!-- 3 columns for up to 6 print types, 4 for 7-8 (more than 8: the rest under "More ▾") -->
+      <ItemsPanelTemplate x:Key="ThreeCols"><UniformGrid Columns="{Binding DataContext.PrintGridColumns, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}"/></ItemsPanelTemplate>
+      <Style x:Key="PrintPill" TargetType="ToggleButton" BasedOn="{StaticResource PillToggle}">
+        <Setter Property="Margin" Value="0,0,4,3"/><Setter Property="FontSize" Value="10.5"/>
+        <Setter Property="Height" Value="NaN"/><Setter Property="MinHeight" Value="16"/><Setter Property="VerticalAlignment" Value="Stretch"/>
+        <Style.Triggers>
+          <DataTrigger Binding="{Binding Compact, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}" Value="True">
+            <Setter Property="FontSize" Value="8.5"/><Setter Property="MinHeight" Value="14"/><Setter Property="Margin" Value="0,0,3,2"/>
+          </DataTrigger>
+        </Style.Triggers>
+      </Style>
       <ItemsPanelTemplate x:Key="FourCols"><UniformGrid Columns="4"/></ItemsPanelTemplate>
     </Border.Resources>
     <Grid>
@@ -29,30 +39,45 @@
           </Button>
         </Grid>
       </Border>
-      <ItemsControl Grid.Row="2" ItemsSource="{Binding PrintMethodsView}">
+      <ItemsControl Grid.Row="2" ItemsSource="{Binding PrintGridItems}">
         <ItemsControl.Style>
           <Style TargetType="ItemsControl">
             <Setter Property="ItemsPanel" Value="{StaticResource ThreeCols}"/>
             <Style.Triggers><DataTrigger Binding="{Binding Compact, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}" Value="True"><Setter Property="ItemsPanel" Value="{StaticResource FourCols}"/></DataTrigger></Style.Triggers>
           </Style>
         </ItemsControl.Style>
-        <ItemsControl.ItemTemplate>
+        <ItemsControl.Resources>
+          <!-- one print type -->
           <DataTemplate DataType="{x:Type m:PrintMethodOption}">
-            <ToggleButton Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}" ToolTip="Select up to 2 print types">
-              <ToggleButton.Style>
-                <Style TargetType="ToggleButton" BasedOn="{StaticResource PillToggle}">
-                  <Setter Property="Margin" Value="0,0,4,3"/><Setter Property="FontSize" Value="10.5"/>
-                  <Setter Property="Height" Value="NaN"/><Setter Property="MinHeight" Value="20"/><Setter Property="VerticalAlignment" Value="Stretch"/>
-                  <Style.Triggers>
-                    <DataTrigger Binding="{Binding Compact, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}" Value="True">
-                      <Setter Property="FontSize" Value="8.5"/><Setter Property="MinHeight" Value="18"/><Setter Property="Margin" Value="0,0,3,2"/>
-                    </DataTrigger>
-                  </Style.Triggers>
-                </Style>
-              </ToggleButton.Style>
-            </ToggleButton>
+            <ToggleButton Style="{StaticResource PrintPill}" Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                          ToolTip="{Binding Name}"/>
           </DataTemplate>
-        </ItemsControl.ItemTemplate>
+          <!-- second level: the other print types -->
+          <DataTemplate DataType="{x:Type m:MorePrintMethods}">
+            <Grid>
+              <ToggleButton x:Name="MoreButton" Style="{StaticResource PrintPill}" Content="{Binding Text}" IsChecked="{Binding IsOpen, Mode=TwoWay}"
+                            ToolTip="More print types"/>
+              <Popup PlacementTarget="{Binding ElementName=MoreButton}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True"
+                     IsOpen="{Binding IsOpen, Mode=TwoWay}" PopupAnimation="Fade">
+                <Border Background="White" BorderBrush="#E2E4E8" BorderThickness="1" CornerRadius="9" Padding="8" Margin="0,3,10,10"
+                        Effect="{StaticResource SoftShadow}" MinWidth="220" MaxWidth="420">
+                  <StackPanel>
+                    <TextBlock Text="MORE PRINT TYPES - select up to 2 in total" FontSize="9" FontWeight="Bold" Foreground="#8A8F98" Margin="2,0,0,6"/>
+                    <ItemsControl ItemsSource="{Binding Items}">
+                      <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type m:PrintMethodOption}">
+                          <ToggleButton Style="{StaticResource PillToggle}" Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                        Height="26" FontSize="11" Margin="0,0,5,5" ToolTip="{Binding Name}"/>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </Border>
+              </Popup>
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.Resources>
       </ItemsControl>
     </Grid>
   </Border>

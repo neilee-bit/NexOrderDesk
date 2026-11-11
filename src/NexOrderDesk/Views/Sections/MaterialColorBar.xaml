@@ -83,8 +83,16 @@
                 </TextBlock.Style>
               </TextBlock>
             </Grid>
+            <!-- bottoms / shorts (2.9): the colour is a plain text field (default WHITE) - no swatch, no colour picker -->
+            <Grid Grid.Column="5" Margin="6,2,4,2" VerticalAlignment="Center" MinWidth="110" MaxWidth="190"
+                  Visibility="{Binding DataContext.IsBottoms, RelativeSource={RelativeSource AncestorType=s:MaterialColorBar}, Converter={StaticResource BoolToVis}}">
+              <Border CornerRadius="9" Background="#F3F4F6" Margin="0,1"/>
+              <TextBox x:Name="PlainColour" Style="{StaticResource ValueBox}" FontSize="12" FontWeight="Bold" CharacterCasing="Upper" TextAlignment="Center"
+                       h:FitText.Enabled="True" Text="{Binding ColorName, UpdateSourceTrigger=PropertyChanged}" ToolTip="Colour (type it)"/>
+            </Grid>
             <!-- colour: type a name, the swatch is found automatically; click the swatch for the colour picker -->
-            <s:ColorBox Grid.Column="5" Margin="4,2,2,2" VerticalAlignment="Center">
+            <s:ColorBox Grid.Column="5" Margin="4,2,2,2" VerticalAlignment="Center"
+                        Visibility="{Binding DataContext.IsBottoms, RelativeSource={RelativeSource AncestorType=s:MaterialColorBar}, Converter={StaticResource InvBoolToVis}}">
               <s:ColorBox.Style>
                 <Style TargetType="s:ColorBox">
                   <Setter Property="MaxWidth" Value="130"/><Setter Property="MinWidth" Value="80"/>
