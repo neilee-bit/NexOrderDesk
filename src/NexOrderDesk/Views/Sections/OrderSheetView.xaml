@@ -78,10 +78,11 @@
           <s:BottomSpecsPanel Grid.Row="4"/>
           <s:PrintMethodPanel Grid.Row="6" Compact="True"/>
         </Grid>
+        <!-- 2.9: the same size table as the other order types (Adults + optional Kids / PS / other sizes columns) -->
         <Grid Grid.Column="2">
-          <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="6"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+          <Grid.RowDefinitions><RowDefinition Height="178*"/><RowDefinition Height="6"/><RowDefinition Height="256*"/></Grid.RowDefinitions>
           <s:NotesPanel/>
-          <s:BottomSizeStrip Grid.Row="2"/>
+          <s:SizeTablePanel Grid.Row="2"/>
         </Grid>
       </Grid>
 

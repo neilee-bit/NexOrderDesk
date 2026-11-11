@@ -16,10 +16,10 @@ public class SizeColumn : ObservableObject
     public SizeColumn(string header, ICollectionView view, ICommand? addRowCommand = null)
     { _header = header; View = view; AddRowCommand = addRowCommand; }
 
-    /// <summary>Adult column with a selectable category and sleeve type.</summary>
+    /// <summary>Adult column with a selectable category and sleeve type (sleeve = "" : category only, e.g. bottoms).</summary>
     public static SizeColumn Adult(string category, string sleeve, ICollectionView view)
     {
-        var c = new SizeColumn("", view) { IsAdult = true };
+        var c = new SizeColumn("", view) { IsAdult = true, HasSleeve = sleeve.Length > 0 };
         c._category = category; c._sleeve = sleeve;
         c.ApplySleeve();
         return c;
@@ -30,7 +30,9 @@ public class SizeColumn : ObservableObject
     public IReadOnlyList<string> Categories => NexOrderDesk.Data.DefaultOptions.GarmentCategories;
     public IReadOnlyList<string> Sleeves => NexOrderDesk.Data.DefaultOptions.GarmentSleeves;
     public bool IsFixed => !IsAdult;
-    public string Header => IsAdult ? $"{_category} ({_sleeve})" : _header;
+    /// <summary>False for bottoms: the header is just the category ("Adults", "Gents" …).</summary>
+    public bool HasSleeve { get; private init; } = true;
+    public string Header => !IsAdult ? _header : HasSleeve ? $"{_category} ({_sleeve})" : _category;
 
     public string Category
     {
@@ -41,7 +43,7 @@ public class SizeColumn : ObservableObject
     public string Sleeve
     {
         get => _sleeve;
-        set { if (IsAdult && value != null && Set(ref _sleeve, value)) { ApplySleeve(); OnPropertyChanged(nameof(Header)); } }
+        set { if (IsAdult && HasSleeve && value != null && Set(ref _sleeve, value)) { ApplySleeve(); OnPropertyChanged(nameof(Header)); } }
     }
 
     private void ApplySleeve()

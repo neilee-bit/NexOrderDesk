@@ -157,26 +157,32 @@ public static class SelfTest
     private static void BottomsStrip(SettingsService s)
     {
         var o = NewOrder(s, SheetLayout.Bottoms);
+        var live = Host(o);
         Check("bottoms: all adult sizes 4XS-5XL", string.Join(",", o.BottomSizes.Select(e => e.Label)) == "4XS,3XS,2XS,XS,S,M,L,XL,2XL,3XL,4XL,5XL",
               string.Join(",", o.BottomSizes.Select(e => e.Label)));
-        Check("bottoms: Kids and PS lines hidden until switched on", o.BottomLines[0].IsShown && !o.BottomLines[1].IsShown && !o.BottomLines[2].IsShown, "");
-        o.IncludeKids = true; o.IncludeBottomPs = true;
-        Check("bottoms: + Kids and + PS add their lines", o.BottomLines.All(l => l.IsShown) &&
-              o.BottomLines[1].View.Cast<object>().Count() == 9 && o.BottomLines[2].View.Cast<object>().Count() == 8, "");
+        Check("bottoms: the same size table as other sheets", FindAll<SizeTablePanel>(live).Any(IsShown), "");
+        Check("bottoms: only the Adults column until Kids / PS are switched on",
+              o.SizeColumnsView.Cast<SizeColumn>().Select(c => c.Header).SequenceEqual(new[] { "Adults" }), string.Join(", ", o.SizeColumns.Select(c => c.Header)));
+        o.IncludeBottomPs = true; o.IncludeKids = true; o.IncludeExtraSizes = true;
+        var heads = o.SizeColumnsView.Cast<SizeColumn>().Select(c => c.Header).ToList();
+        Check("bottoms: + Kids, + PS and + Other sizes add columns in order", heads.SequenceEqual(new[] { "Adults", "Kids", "PS", "Optional sizes" }), string.Join(", ", heads));
+        o.BottomAdultColumn.Category = "Gents";
+        o.BottomAdultColumn.Sleeve = "L/S";                   // no sleeve on bottoms
+        Check("bottoms: adult category without sleeve", o.BottomAdultColumn.Header == "Gents", o.BottomAdultColumn.Header);
         o.BottomSizes.First(e => e.Label == "M").Quantity = 10;
         o.BottomSizes.First(e => e.Label == "5XL").Quantity = 2;
         o.Kids.First(e => e.Label == "KM").Quantity = 6;
         o.Preschool.First(e => e.Label == "PS").Quantity = 4;
         Check("bottoms: total includes kids and PS", o.TotalQuantity == 22, o.TotalQuantity.ToString());
         o.SubmitCommand.Execute(null); Pump(); Pump();
-        Check("bottoms: only filled sizes after Submit", o.BottomLines[0].View.Cast<object>().Count() == 2 && o.BottomLines[1].View.Cast<object>().Count() == 1 &&
-              o.BottomLines[2].View.Cast<object>().Count() == 1 && o.BottomLines[0].Compact && o.BottomLines[0].Width == 128, "");
+        heads = o.SizeColumnsView.Cast<SizeColumn>().Select(c => c.Header).ToList();
+        Check("bottoms: empty columns left off after Submit", heads.SequenceEqual(new[] { "Gents", "Kids", "PS" }), string.Join(", ", heads));
         var printed = Texts(Render(o));
-        Check("bottoms: printed sizes, lines and total", new[] { "M", "5XL", "KM", "PS", "KIDS", "22" }.All(printed.Contains) && !printed.Contains("XS"),
-              string.Join(" | ", printed.Take(60)));
+        Check("bottoms: printed sizes, columns and total", new[] { "M", "5XL", "KM", "PS", "Kids", "Gents" }.All(printed.Contains) &&
+              printed.Any(t => t.Contains("22")) && !printed.Contains("XS"), string.Join(" | ", printed.Take(60)));
         o.EditCommand.Execute(null); o.IncludeKids = false; Pump();
-        Check("bottoms: switching Kids off clears its quantities", o.TotalQuantity == 16 && !o.BottomLines[1].IsShown, o.TotalQuantity.ToString());
-        o.Detach();
+        Check("bottoms: switching Kids off removes its column and quantities", o.TotalQuantity == 16 && !o.SizeColumns.Any(c => c.Header == "Kids"), o.TotalQuantity.ToString());
+        Close(live, o);
     }
 
     private static void ThemeContrast(SettingsService s)
@@ -276,6 +282,41 @@ public static class SelfTest
         var printed = Texts(Render(o));
         Check("colour: printed on the sheet", printed.Contains("BOTTLE GREEN"), "");
         o.Detach();
+
+        // advanced colour picker
+        Check("picker: every built-in colour is in a family", ColorFamilies.Library.All(sw => ColorFamilies.Names.Contains(ColorFamilies.FamilyOf(sw.Hex))) &&
+              ColorFamilies.Names.All(f => ColorFamilies.InFamily(f).Count() >= 8), string.Join(", ", ColorFamilies.Names.Select(f => f + " " + ColorFamilies.InFamily(f).Count())));
+        Check("picker: family sorting (navy, bottle green, maroon)", ColorFamilies.FamilyOf("#1B2A4A") == "Blues & Navy" && ColorFamilies.FamilyOf("#0B4D2C") == "Greens" &&
+              ColorFamilies.FamilyOf("#6D1A2B") == "Reds & Maroons", "");
+        var p = NewOrder(s, SheetLayout.Tops);
+        var w = new Window { Width = 1100, Height = 820, ShowInTaskbar = false, WindowStyle = WindowStyle.None, Left = -3000, Top = -3000,
+                             Content = new Border { Width = 840, Height = 592, Child = new OrderSheetView { DataContext = p } } };
+        w.Show(); Pump();
+        var cb = FindAll<ColorBox>(w).FirstOrDefault(IsShown);
+        if (cb == null) { Fail("picker: colour field not found"); w.Close(); p.Detach(); return; }
+        cb.OpenPicker(); Pump();
+        Check("picker: opens on the current colour's family", cb.IsPickerOpen && cb.Picker.CurrentFamily == "Whites & Creams" && cb.Picker.VisibleSwatches.Count >= 10,
+              $"{cb.IsPickerOpen} {cb.Picker.CurrentFamily} {cb.Picker.VisibleSwatches.Count}");
+        cb.Picker.ShowFamily("Blues & Navy"); Pump();
+        var navy = cb.Picker.VisibleSwatches.FirstOrDefault(x => x.Name == "NAVY BLUE");
+        Check("picker: palette family shows its colours", navy != null, string.Join(", ", cb.Picker.VisibleSwatches.Take(10).Select(x => x.Name)));
+        if (navy != null) cb.Picker.Use(navy.Name, navy.Hex);
+        Pump();
+        var pm = p.MaterialColors[0];
+        Check("picker: a palette click fills name and colour and closes", pm.ColorName == "NAVY BLUE" && pm.PickedHex == "#1B2A4A" && !cb.IsPickerOpen,
+              $"{pm.ColorName} {pm.PickedHex} {cb.IsPickerOpen}");
+        cb.OpenPicker(); Pump();
+        Check("picker: seven shades of the current colour", cb.Picker.ShadeSwatches.Count == 7 && cb.Picker.ShadeSwatches[5].Name == "DARK NAVY BLUE",
+              string.Join(", ", cb.Picker.ShadeSwatches.Select(x => x.Name)));
+        cb.Picker.SetCustom(140, 0.85, 0.45); Pump();
+        var customHex = cb.Picker.CurrentHex; var customName = cb.Picker.CurrentName;
+        Check("picker: custom colour gets the closest colour name", customName.Contains("GREEN"), customName + " " + customHex);
+        cb.Picker.Use(customName, customHex); Pump();
+        Check("picker: custom colour used exactly", pm.PickedHex == customHex && (pm.ColorBrush as SolidColorBrush)?.Color.ToString().Replace("#FF", "#") == customHex,
+              pm.PickedHex ?? "none");
+        pm.ColorName = "MAROON";
+        Check("picker: typing a name afterwards looks the name up again", pm.PickedHex == null && pm.CurrentHex == "#6D1A2B", pm.CurrentHex ?? "none");
+        w.Close(); p.Detach();
     }
 
     private static void PrintPress(SettingsService s)

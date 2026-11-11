@@ -96,10 +96,13 @@
                     <StackPanel Orientation="Horizontal">
                       <ComboBox Style="{StaticResource FlatCombo}" FontSize="12" FontWeight="Bold" Foreground="#000000" MinWidth="40"
                                 ItemsSource="{Binding Categories}" SelectedItem="{Binding Category}" ToolTip="Garment category: Adults, Unisex, Gents or Lads"/>
-                      <TextBlock Text="(" FontSize="12" FontWeight="Bold" Foreground="#000000" VerticalAlignment="Center"/>
-                      <ComboBox Style="{StaticResource FlatCombo}" FontSize="12" FontWeight="Bold" Foreground="#000000" MinWidth="26"
-                                ItemsSource="{Binding Sleeves}" SelectedItem="{Binding Sleeve}" ToolTip="Sleeve type: S/S (short sleeve) or L/S (long sleeve)"/>
-                      <TextBlock Text=")" FontSize="12" FontWeight="Bold" Foreground="#000000" VerticalAlignment="Center"/>
+                      <!-- sleeve part (not on bottoms / shorts) -->
+                      <StackPanel Orientation="Horizontal" Visibility="{Binding HasSleeve, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="(" FontSize="12" FontWeight="Bold" Foreground="#000000" VerticalAlignment="Center"/>
+                        <ComboBox Style="{StaticResource FlatCombo}" FontSize="12" FontWeight="Bold" Foreground="#000000" MinWidth="26"
+                                  ItemsSource="{Binding Sleeves}" SelectedItem="{Binding Sleeve}" ToolTip="Sleeve type: S/S (short sleeve) or L/S (long sleeve)"/>
+                        <TextBlock Text=")" FontSize="12" FontWeight="Bold" Foreground="#000000" VerticalAlignment="Center"/>
+                      </StackPanel>
                     </StackPanel>
                   </Viewbox>
                   <!-- "Optional sizes" column: + adds another row -->
@@ -129,10 +132,13 @@
           </TextBlock>
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,6,0"
                       Visibility="{Binding IsEditable, Converter={StaticResource BoolToVis}}">
-            <!-- jackets: Kids column is optional -->
+            <!-- jackets and bottoms: Kids column is optional; bottoms: PS column too -->
             <ToggleButton Style="{StaticResource PillToggle}" Content="+ Kids" Width="52" Height="16" FontSize="8.5" Margin="0,0,4,0"
-                          IsChecked="{Binding IncludeKids, Mode=TwoWay}" ToolTip="Add the Kids (S/S) column"
-                          Visibility="{Binding IsJacket, Converter={StaticResource BoolToVis}}"/>
+                          IsChecked="{Binding IncludeKids, Mode=TwoWay}" ToolTip="Add the Kids column (K3XS to K3XL)"
+                          Visibility="{Binding ShowKidsToggle, Converter={StaticResource BoolToVis}}"/>
+            <ToggleButton Style="{StaticResource PillToggle}" Content="+ PS" Width="44" Height="16" FontSize="8.5" Margin="0,0,4,0"
+                          IsChecked="{Binding IncludeBottomPs, Mode=TwoWay}" ToolTip="Add the pre-school column (P4XS to PXL)"
+                          Visibility="{Binding IsBottoms, Converter={StaticResource BoolToVis}}"/>
             <ToggleButton Style="{StaticResource PillToggle}" Content="{Binding ExtraSizesText}" Width="72" Height="16" FontSize="8.5"
                           IsChecked="{Binding IncludeExtraSizes, Mode=TwoWay}" ToolTip="{Binding ExtraSizesTip}"/>
           </StackPanel>

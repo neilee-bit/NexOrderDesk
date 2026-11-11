@@ -17,7 +17,28 @@ public partial class ColorBox : UserControl
     public sealed record Suggestion(string Name, Brush Brush);
     private bool _filling;
 
-    public ColorBox() { InitializeComponent(); }
+    public ColorBox()
+    {
+        InitializeComponent();
+        Picker.Picked += (name, hex) =>
+        {
+            (DataContext as MaterialColorEntry)?.Pick(name, hex);
+            PickerPopup.IsOpen = false;
+        };
+    }
+
+    public bool IsPickerOpen => PickerPopup.IsOpen;
+
+    /// <summary>Opens the advanced colour picker on the current colour.</summary>
+    public void OpenPicker()
+    {
+        if (DataContext is not MaterialColorEntry m || !IsHitTestVisibleChain()) return;
+        DropPopup.IsOpen = false;
+        Picker.Start(m.CurrentHex, m.ColorName);
+        PickerPopup.IsOpen = true;
+    }
+
+    private void OnOpenPicker(object sender, RoutedEventArgs e) => OpenPicker();
 
     public IReadOnlyList<string> SuggestionNames => List.Items.OfType<Suggestion>().Select(x => x.Name).ToList();
     public bool IsDropDownOpen => DropPopup.IsOpen;

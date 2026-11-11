@@ -1,17 +1,32 @@
-<UserControl x:Class="NexOrderDesk.Views.Sections.ColorBox" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:h="clr-namespace:NexOrderDesk.Core">
+<UserControl x:Class="NexOrderDesk.Views.Sections.ColorBox" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:h="clr-namespace:NexOrderDesk.Core" xmlns:s="clr-namespace:NexOrderDesk.Views.Sections">
   <!-- Material colour (2.9): type a colour name, the swatch is found automatically; suggestions show while typing. -->
   <Grid>
     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-    <Grid Width="16" Height="16" Margin="2,0,5,0" VerticalAlignment="Center" ToolTip="{Binding ColorHint}">
-      <Border CornerRadius="8" Background="{Binding ColorBrush}" BorderBrush="#C8C8C8" BorderThickness="0.8"/>
-      <TextBlock Text="?" FontSize="10" FontWeight="Bold" Foreground="#9AA0A9" HorizontalAlignment="Center" VerticalAlignment="Center"
-                 Visibility="{Binding ColorFound, Converter={StaticResource InvBoolToVis}}"/>
-    </Grid>
+    <!-- the swatch: click it for the colour picker (palette, custom colour, shades) -->
+    <Button x:Name="SwatchButton" Width="16" Height="16" Margin="2,0,5,0" VerticalAlignment="Center" Cursor="Hand" Focusable="False"
+            Click="OnOpenPicker" ToolTip="Click to pick a colour: palette, custom colour, shades">
+      <Button.Template>
+        <ControlTemplate TargetType="Button">
+          <Grid>
+            <Border x:Name="Ring" CornerRadius="8" Background="{Binding ColorBrush}" BorderBrush="#C8C8C8" BorderThickness="0.8"/>
+            <TextBlock Text="?" FontSize="10" FontWeight="Bold" Foreground="#9AA0A9" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Visibility="{Binding ColorFound, Converter={StaticResource InvBoolToVis}}"/>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Ring" Property="BorderBrush" Value="#1E1E1E"/><Setter TargetName="Ring" Property="BorderThickness" Value="1.5"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Button.Template>
+    </Button>
     <TextBox x:Name="Box" Grid.Column="1" Style="{StaticResource ValueBox}" FontSize="12"
              FontWeight="Bold" TextAlignment="Left" CharacterCasing="Upper" Padding="0" MinWidth="44" h:FitText.Enabled="True"
              Text="{Binding ColorName, UpdateSourceTrigger=PropertyChanged}" ToolTip="{Binding ColorHint}"
              TextChanged="OnTextChanged" PreviewKeyDown="OnKeyDown" PreviewMouseLeftButtonUp="OnBoxClick"
              GotKeyboardFocus="OnGotFocus" LostKeyboardFocus="OnLostFocus"/>
+    <Popup x:Name="PickerPopup" PlacementTarget="{Binding ElementName=SwatchButton}" Placement="Bottom" StaysOpen="False"
+           AllowsTransparency="True" PopupAnimation="Fade">
+      <s:ColorPicker x:Name="Picker"/>
+    </Popup>
     <Popup x:Name="DropPopup" PlacementTarget="{Binding ElementName=Box}" Placement="Bottom" StaysOpen="True" AllowsTransparency="True"
            Focusable="False" PopupAnimation="Fade">
       <Border Background="White" BorderBrush="#E2E4E8" BorderThickness="1" CornerRadius="7" Margin="0,3,8,8" MinWidth="190"

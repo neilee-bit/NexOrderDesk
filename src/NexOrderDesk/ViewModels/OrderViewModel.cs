@@ -101,17 +101,6 @@ public class OrderViewModel : ObservableObject
             if (OptionalSizes.Count < DefaultOptions.OptionalRowsMax) OptionalSizes.Add(new SizeEntry("", "", true, true) { IsActive = true });
         }, _ => IsEditable && OptionalSizes.Count < DefaultOptions.OptionalRowsMax);
 
-        // bottoms: one horizontal strip XS..4XL (+ optional sizes), total beside it
-        BottomStrip = new ObservableCollection<SizeEntry>(BottomSizes.Concat(OptionalSizes));
-        OptionalSizes.CollectionChanged += (_, a) => { if (a.NewItems != null) foreach (SizeEntry e in a.NewItems) BottomStrip.Add(e); };
-        BottomStripView = MakeSizeView(BottomStrip);
-        // 2.9: Adults line (+ other sizes), then Kids and PS lines when switched on
-        BottomLines = new ObservableCollection<StripLine>
-        {
-            new("ADULTS", BottomStrip, () => IsEditable, () => true),
-            new("KIDS", Kids, () => IsEditable, () => _includeKids),
-            new("PS", Preschool, () => IsEditable, () => _includeBottomPs),
-        };
 
         // flags
         FlagSizes = new(Enumerable.Range(0, DefaultOptions.FlagRowsStart).Select(_ => NewFlagRow()));
@@ -124,8 +113,9 @@ public class OrderViewModel : ObservableObject
         // adult columns: category (Adults / Unisex / Gents / Lads) and sleeve (S/S / L/S) are chosen in their headers
         AdultShortColumn = SizeColumn.Adult("Adults", "S/S", AdultShortView);
         AdultLongColumn = SizeColumn.Adult("Adults", "L/S", AdultLongView);
+        BottomAdultColumn = SizeColumn.Adult("Adults", "", BottomSizesView);
         SizeColumns = IsBottoms
-            ? new ObservableCollection<SizeColumn> { new("Size Breakdown", BottomSizesView) }
+            ? new ObservableCollection<SizeColumn> { BottomAdultColumn }
             : IsJacket
                 ? new ObservableCollection<SizeColumn> { AdultShortColumn, AdultLongColumn }
                 : new ObservableCollection<SizeColumn> { AdultShortColumn, AdultLongColumn, new("Kids (S/S)", KidsView) };
@@ -487,6 +477,9 @@ public class OrderViewModel : ObservableObject
     public ICommand AddOptionalSizeCommand { get; }
     public SizeColumn AdultShortColumn { get; }
     public SizeColumn AdultLongColumn { get; }
+    /// <summary>Bottoms / shorts: the adult column (category only - no sleeve).</summary>
+    public SizeColumn BottomAdultColumn { get; }
+    public bool ShowKidsToggle => IsJacket || IsBottoms;
     /// <summary>What the size table shows: every column while editing; on the submitted sheet only columns with quantities.</summary>
     public ICollectionView SizeColumnsView { get; }
     /// <summary>Columns shown in the size table. Tops: Adults S/S, Adults L/S, Kids S/S (+ PS). Bottoms: Size Breakdown (+ Optional sizes).</summary>
@@ -534,7 +527,7 @@ public class OrderViewModel : ObservableObject
             if (value && col == null)
                 SizeColumns.Add(IsBottoms ? new SizeColumn("Optional sizes", view, AddOptionalSizeCommand) : new SizeColumn("PS (S/S)", view));
             else if (!value && col != null) SizeColumns.Remove(col);
-            view.Refresh(); BottomStripView.Refresh(); RefreshBottomLines();
+            view.Refresh();
             OnPropertyChanged(nameof(TotalQuantity)); OnPropertyChanged(nameof(SizeRowCount));
         }
     }
@@ -542,7 +535,7 @@ public class OrderViewModel : ObservableObject
 
     private bool _includeKids;
     private bool _includeBottomPs;
-    /// <summary>Bottoms / shorts: "+ PS" adds the pre-school sizes line (P4XS to PXL).</summary>
+    /// <summary>Bottoms / shorts: "+ PS" adds the pre-school column (P4XS to PXL).</summary>
     public bool IncludeBottomPs
     {
         get => _includeBottomPs;
@@ -550,16 +543,17 @@ public class OrderViewModel : ObservableObject
         {
             if (!IsBottoms || !Set(ref _includeBottomPs, value)) return;
             foreach (var e in Preschool) { e.IsActive = value; if (!value) e.Quantity = null; }
-            PreschoolView.Refresh(); RefreshBottomLines();
+            var col = SizeColumns.FirstOrDefault(c => c.View == PreschoolView);
+            if (value && col == null) SizeColumns.Insert(SizeColumns.Count(c => c.View != OptionalSizesView), new SizeColumn("PS", PreschoolView));
+            else if (!value && col != null) SizeColumns.Remove(col);
+            PreschoolView.Refresh();
             OnPropertyChanged(nameof(TotalQuantity)); OnPropertyChanged(nameof(SizeRowCount));
         }
     }
 
-    /// <summary>Bottoms / shorts size lines: Adults (+ other sizes), Kids, PS.</summary>
-    public ObservableCollection<StripLine> BottomLines { get; }
-    private void RefreshBottomLines() { foreach (var l in BottomLines) l.Refresh(); }
 
-    /// <summary>Jackets: "+ Kids" adds the Kids (S/S) column. Bottoms: "+ Kids" adds the Kids sizes line.</summary>
+
+    /// <summary>Jackets: "+ Kids" adds the Kids (S/S) column. Bottoms: "+ Kids" adds the Kids column.</summary>
     public bool IncludeKids
     {
         get => _includeKids;
@@ -567,13 +561,10 @@ public class OrderViewModel : ObservableObject
         {
             if (!(IsJacket || IsBottoms) || !Set(ref _includeKids, value)) return;
             foreach (var e in Kids) { e.IsActive = value; if (!value) e.Quantity = null; }
-            if (IsJacket)
-            {
-                var col = SizeColumns.FirstOrDefault(c => c.View == KidsView);
-                if (value && col == null) SizeColumns.Insert(Math.Min(2, SizeColumns.Count), new SizeColumn("Kids (S/S)", KidsView));
-                else if (!value && col != null) SizeColumns.Remove(col);
-            }
-            KidsView.Refresh(); RefreshBottomLines();
+            var col = SizeColumns.FirstOrDefault(c => c.View == KidsView);
+            if (value && col == null) SizeColumns.Insert(Math.Min(IsBottoms ? 1 : 2, SizeColumns.Count), new SizeColumn(IsBottoms ? "Kids" : "Kids (S/S)", KidsView));
+            else if (!value && col != null) SizeColumns.Remove(col);
+            KidsView.Refresh();
             OnPropertyChanged(nameof(TotalQuantity)); OnPropertyChanged(nameof(SizeRowCount));
         }
     }
@@ -583,9 +574,6 @@ public class OrderViewModel : ObservableObject
 
     public int TotalQuantity => AllSizes.Where(x => x.IsActive).Sum(x => x.Quantity ?? 0);
 
-    /// <summary>Bottoms size strip (XS..4XL then the optional sizes), shown left-to-right with the total beside it.</summary>
-    public ObservableCollection<SizeEntry> BottomStrip { get; }
-    public ICollectionView BottomStripView { get; }
 
 
     // ---- flags ----
@@ -639,8 +627,7 @@ public class OrderViewModel : ObservableObject
             if (!Set(ref _isEditable, value)) return;
             AdultShortView.Refresh(); AdultLongView.Refresh(); KidsView.Refresh(); PreschoolView.Refresh();
             BottomSizesView.Refresh(); OptionalSizesView.Refresh(); PrintMethodsView.Refresh(); ExtrasView.Refresh();
-            BottomStripView.Refresh(); FlagSizesView.Refresh(); JacketExtrasView.Refresh(); SizeColumnsView.Refresh();
-            RefreshBottomLines();
+            FlagSizesView.Refresh(); JacketExtrasView.Refresh(); SizeColumnsView.Refresh();
             OnPropertyChanged(nameof(SizeRowCount)); OnPropertyChanged(nameof(ShowNoExtras)); OnPropertyChanged(nameof(ShowNoJacketExtras));
         }
     }

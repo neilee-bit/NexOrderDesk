@@ -28,9 +28,9 @@ VERSION, INSTALLERS AND ONLINE RELEASES  ->  full guide: RELEASING.md
 
 New in 2.9
 - Readable text on dark theme colours (order number, totals, print method …): white on dark, dark on light.
-- Material colour: type a colour name, the swatch is found automatically (no colour codes).
+- Material colour: type a colour name, the swatch is found automatically (no colour codes); click the swatch for the colour picker (palette families, custom colour, shades, my colours).
 - Print and Press: only Collar Patch / Placket (tick + colour, shown when ticked) and Piping.
-- Bottoms: 4XS-5XL + Kids and PS size lines. 18 more apparel icons. Ctrl+N new order.
+- Bottoms: same size table as other sheets - Adults 4XS-5XL + Kids / PS / other sizes columns. 18 more apparel icons. Ctrl+N new order.
 - Bold selections, slim suggestion scroll bars, single picture fills its area, long names shrink to fit.
 
 New in 2.8

@@ -1,0 +1,144 @@
+<UserControl x:Class="NexOrderDesk.Views.Sections.ColorPicker" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Advanced colour picker (2.9): Palette (colour families + my colours) | Custom (shade square + hue bar), shades row,
+       name with the nearest colour name filled in, Use colour / Save to my colours. No colour codes. -->
+  <UserControl.Resources>
+    <Style x:Key="Tab" TargetType="RadioButton">
+      <Setter Property="FontSize" Value="11"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Foreground" Value="#374151"/><Setter Property="Margin" Value="0,0,4,0"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Border x:Name="Bd" CornerRadius="12" Padding="12,4" Background="#F1F2F4">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="#1E1E1E"/><Setter Property="Foreground" Value="White"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key="Chip" TargetType="RadioButton" BasedOn="{StaticResource Tab}">
+      <Setter Property="FontSize" Value="9.5"/><Setter Property="Margin" Value="0,0,3,3"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Border x:Name="Bd" CornerRadius="9" Padding="7,2" Background="White" BorderBrush="#DADDE2" BorderThickness="1">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="#9AA0A9"/></Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="#1E1E1E"/><Setter TargetName="Bd" Property="BorderBrush" Value="#1E1E1E"/>
+              <Setter Property="Foreground" Value="White"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <!-- one round colour swatch -->
+    <Style x:Key="SwatchButton" TargetType="Button">
+      <Setter Property="Width" Value="22"/><Setter Property="Height" Value="22"/><Setter Property="Margin" Value="0,0,4,4"/>
+      <Setter Property="Cursor" Value="Hand"/><Setter Property="ToolTip" Value="{Binding Name}"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Bd" CornerRadius="11" Background="{Binding Brush}" BorderBrush="#C8CCD2" BorderThickness="1"/>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="BorderBrush" Value="#1E1E1E"/><Setter TargetName="Bd" Property="BorderThickness" Value="2"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <DataTemplate x:Key="SwatchItem">
+      <Button Style="{StaticResource SwatchButton}" Click="OnSwatch"/>
+    </DataTemplate>
+    <ItemsPanelTemplate x:Key="Wrap"><WrapPanel/></ItemsPanelTemplate>
+  </UserControl.Resources>
+
+  <Border Background="White" BorderBrush="#E2E4E8" BorderThickness="1" CornerRadius="10" Width="352" Padding="12,10"
+          Effect="{StaticResource SoftShadow}" Margin="0,3,10,10">
+    <Border.Resources><Style TargetType="ScrollBar" BasedOn="{StaticResource SlimScrollBar}"/></Border.Resources>
+    <StackPanel>
+      <!-- tabs -->
+      <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+        <RadioButton x:Name="PaletteTab" Style="{StaticResource Tab}" Content="Palette" GroupName="PickerTab" IsChecked="True" Checked="OnTab"/>
+        <RadioButton x:Name="CustomTab" Style="{StaticResource Tab}" Content="Custom" GroupName="PickerTab" Checked="OnTab"/>
+      </StackPanel>
+
+      <!-- PALETTE: colour families -->
+      <StackPanel x:Name="PalettePanel">
+        <ItemsControl x:Name="Families" ItemsPanel="{StaticResource Wrap}" Margin="0,0,0,4">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <RadioButton Style="{StaticResource Chip}" Content="{Binding}" GroupName="PickerFamily" Checked="OnFamily"/>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto" CanContentScroll="False">
+          <ItemsControl x:Name="Swatches" ItemsPanel="{StaticResource Wrap}" ItemTemplate="{StaticResource SwatchItem}"/>
+        </ScrollViewer>
+        <TextBlock x:Name="EmptyText" Text="No saved colours yet - pick a colour and press ☆ Save to my colours." FontSize="10.5"
+                   Foreground="#8A8F98" TextWrapping="Wrap" Visibility="Collapsed" Margin="0,2,0,4"/>
+      </StackPanel>
+
+      <!-- CUSTOM: shade square + hue bar -->
+      <Grid x:Name="CustomPanel" Visibility="Collapsed" Height="140">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="20"/></Grid.ColumnDefinitions>
+        <Grid x:Name="SvArea" Cursor="Cross" ClipToBounds="True" MouseLeftButtonDown="OnSvDown" MouseMove="OnSvMove" MouseLeftButtonUp="OnUp">
+          <Border x:Name="HueFill" CornerRadius="6" Background="Red"/>
+          <Border CornerRadius="6">
+            <Border.Background>
+              <LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="White" Offset="0"/><GradientStop Color="#00FFFFFF" Offset="1"/></LinearGradientBrush>
+            </Border.Background>
+          </Border>
+          <Border CornerRadius="6">
+            <Border.Background>
+              <LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#00000000" Offset="0"/><GradientStop Color="Black" Offset="1"/></LinearGradientBrush>
+            </Border.Background>
+          </Border>
+          <Canvas IsHitTestVisible="False">
+            <Ellipse x:Name="SvThumb" Width="12" Height="12" Stroke="White" StrokeThickness="2">
+              <Ellipse.Effect><DropShadowEffect BlurRadius="3" ShadowDepth="0" Opacity="0.8"/></Ellipse.Effect>
+            </Ellipse>
+          </Canvas>
+        </Grid>
+        <Grid x:Name="HueArea" Grid.Column="2" Cursor="Hand" MouseLeftButtonDown="OnHueDown" MouseMove="OnHueMove" MouseLeftButtonUp="OnUp">
+          <Border CornerRadius="6">
+            <Border.Background>
+              <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#FF0000" Offset="0"/><GradientStop Color="#FFFF00" Offset="0.1667"/><GradientStop Color="#00FF00" Offset="0.3333"/>
+                <GradientStop Color="#00FFFF" Offset="0.5"/><GradientStop Color="#0000FF" Offset="0.6667"/><GradientStop Color="#FF00FF" Offset="0.8333"/>
+                <GradientStop Color="#FF0000" Offset="1"/>
+              </LinearGradientBrush>
+            </Border.Background>
+          </Border>
+          <Canvas IsHitTestVisible="False">
+            <Border x:Name="HueThumb" Width="24" Height="6" CornerRadius="3" BorderBrush="White" BorderThickness="2" Canvas.Left="-2">
+              <Border.Effect><DropShadowEffect BlurRadius="3" ShadowDepth="0" Opacity="0.8"/></Border.Effect>
+            </Border>
+          </Canvas>
+        </Grid>
+      </Grid>
+
+      <!-- shades of the current colour -->
+      <TextBlock Text="SHADES" FontSize="9" FontWeight="Bold" Foreground="#8A8F98" Margin="0,8,0,3"/>
+      <ItemsControl x:Name="ShadeRow" ItemsPanel="{StaticResource Wrap}" ItemTemplate="{StaticResource SwatchItem}"/>
+
+      <!-- current colour, its name, use / save -->
+      <Border BorderBrush="#E5E7EB" BorderThickness="0,1,0,0" Margin="0,4,0,0" Padding="0,8,0,0">
+        <Grid>
+          <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <Border x:Name="Preview" Width="30" Height="30" CornerRadius="15" BorderBrush="#C8CCD2" BorderThickness="1" Margin="0,0,8,0"/>
+          <StackPanel Grid.Column="1" VerticalAlignment="Center">
+            <TextBox x:Name="NameBox" FontSize="12" FontWeight="Bold" CharacterCasing="Upper" BorderBrush="#DADDE2" Padding="4,2"
+                     ToolTip="Colour name printed on the sheet - change it if you like"/>
+            <TextBlock x:Name="NearText" FontSize="9.5" Foreground="#8A8F98" Margin="2,2,0,0"/>
+          </StackPanel>
+          <StackPanel Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center">
+            <Button x:Name="UseButton" Content="Use colour" Style="{StaticResource PrimaryButton}" Height="24" Padding="10,0" Click="OnUse" IsDefault="True"/>
+            <Button Content="☆ Save to my colours" Height="20" FontSize="9.5" Margin="0,4,0,0" Click="OnSave" Cursor="Hand"
+                    Background="Transparent" BorderThickness="0" Foreground="{DynamicResource AccentDarkBrush}"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+    </StackPanel>
+  </Border>
+</UserControl>

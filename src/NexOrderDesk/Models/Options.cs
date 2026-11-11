@@ -66,8 +66,34 @@ public class MaterialColorEntry : ObservableObject
     public string ColorName
     {
         get => _colorName;
-        set { if (value != null && Set(ref _colorName, value)) Resolve(); }
+        set
+        {
+            if (value == null) return;
+            if (!_picking && _pickedHex != null && !string.Equals(value, _colorName, StringComparison.Ordinal)) _pickedHex = null;   // typed: look the name up again
+            if (Set(ref _colorName, value)) Resolve();
+        }
     }
+
+    private string? _pickedHex;
+    private bool _picking;
+    /// <summary>Exact colour chosen in the colour picker (palette, shades or custom), or null when the colour comes from the name.</summary>
+    public string? PickedHex => _pickedHex;
+
+    /// <summary>Colour picker: sets the name and the exact colour together.</summary>
+    public void Pick(string name, string hex)
+    {
+        _picking = true;
+        try
+        {
+            _pickedHex = ColorMath.NormalizeHex(hex);
+            if (!Set(ref _colorName, (name ?? "").Trim().ToUpperInvariant(), nameof(ColorName))) { }
+            Resolve();
+        }
+        finally { _picking = false; }
+    }
+
+    /// <summary>The colour now shown in the swatch (#RRGGBB), or null when the name is unknown.</summary>
+    public string? CurrentHex => _pickedHex ?? LookUp(_colorName).Hex;
     public Brush ColorBrush { get => _colorBrush; private set => Set(ref _colorBrush, value); }
     /// <summary>False when the typed name is not a known colour (the swatch then shows "?").</summary>
     public bool ColorFound { get => _colorFound; private set => Set(ref _colorFound, value); }
@@ -75,10 +101,19 @@ public class MaterialColorEntry : ObservableObject
 
     private void Resolve()
     {
+        if (_pickedHex != null)
+        {
+            ColorFound = true;
+            ColorBrush = NexOrderDesk.Core.ColorNames.BrushOf(_pickedHex);
+            ColorHint = _colorName.Length > 0 ? _colorName + " (picked)" : "Picked colour";
+            OnPropertyChanged(nameof(CurrentHex));
+            return;
+        }
         var (hex, hint) = LookUp(_colorName);
         ColorFound = hex != null || string.IsNullOrWhiteSpace(_colorName);
         ColorBrush = hex != null ? NexOrderDesk.Core.ColorNames.BrushOf(hex) : Brushes.Transparent;
         ColorHint = hint;
+        OnPropertyChanged(nameof(CurrentHex));
     }
 
     /// <summary>Colour for a name: saved list first, then the built-in names. Returns (null, …) when unknown.</summary>
