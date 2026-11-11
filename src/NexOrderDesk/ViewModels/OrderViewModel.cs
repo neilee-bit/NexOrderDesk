@@ -273,8 +273,8 @@ public class OrderViewModel : ObservableObject
     public bool NoPiping => !_hasPiping;
 
     // ---------------- Print & Press (2.9): short spec list - Collar Patch, Placket, Piping
-    /// <summary>Print and Press orders show only Collar Patch, Placket and Piping (no neck / collar / sleeve / button rows).</summary>
-    public bool IsPrintPress => IsTops && Type.Id == "printpress";
+    /// <summary>Short spec list (Collar Patch, Placket, Piping): Print and Press and Cut and Print (2.9.1).</summary>
+    public bool IsPrintPress => IsTops && Type.Id is "printpress" or "cutprint";
     public bool IsStandardTops => !IsPrintPress;
     private bool _hasCollarPatch, _hasPlacket;
     private string _collarPatchColor = "", _placketColor = "";

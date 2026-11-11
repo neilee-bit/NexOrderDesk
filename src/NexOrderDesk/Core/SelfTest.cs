@@ -538,23 +538,29 @@ public static class SelfTest
 
     private static void PrintPress(SettingsService s)
     {
-        var type = s.OrderTypes.FirstOrDefault(t => t.Id == "printpress");
-        if (type == null) { Fail("print & press: order type missing"); return; }
+        foreach (var id in new[] { "printpress", "cutprint" }) PrintPressFor(s, id);
+    }
+
+    private static void PrintPressFor(SettingsService s, string id)
+    {
+        var type = s.OrderTypes.FirstOrDefault(t => t.Id == id);
+        if (type == null) { Fail($"{id}: order type missing"); return; }
         var o = new OrderViewModel(type, s, 9500) { OrderName = "SELFTEST PRESS" };
+        Check($"{id}: uses the short spec list", o.IsPrintPress, "");
         var live = Texts(Host(o));
-        Check("print & press: neck / collar / sleeve / placket type / button rows removed",
+        Check($"{id}: neck / collar / sleeve / placket type / button rows removed",
               !live.Any(t => t.StartsWith("Neck Type") || t.StartsWith("Collar Color") || t.StartsWith("Sleeve Type") || t.StartsWith("Button")), string.Join(" | ", live.Take(40)));
-        Check("print & press: Collar Patch and Placket rows while editing", live.Contains("Collar Patch & Color:") && live.Contains("Placket & Color:"), "");
+        Check($"{id}: Collar Patch and Placket rows while editing", live.Contains("Collar Patch & Color:") && live.Contains("Placket & Color:"), "");
         o.HasPlacket = true; o.PlacketColor = "NAVY";
         o.AdultShort.First(e => e.Label == "M").Quantity = 3;
         o.SubmitCommand.Execute(null); Pump(); Pump();
         var printed = Texts(Render(o));
-        Check("print & press: unticked Collar Patch not on the submitted sheet", !printed.Contains("Collar Patch & Color:"), "");
-        Check("print & press: ticked Placket with its colour on the sheet", printed.Contains("Placket & Color:") && printed.Contains("NAVY"), string.Join(" | ", printed.Take(40)));
+        Check($"{id}: unticked Collar Patch not on the submitted sheet", !printed.Contains("Collar Patch & Color:"), "");
+        Check($"{id}: ticked Placket with its colour on the sheet", printed.Contains("Placket & Color:") && printed.Contains("NAVY"), string.Join(" | ", printed.Take(40)));
         o.EditCommand.Execute(null); o.HasCollarPatch = true; o.CollarPatchColor = "RED"; o.SubmitCommand.Execute(null); Pump(); Pump();
         printed = Texts(Render(o));
-        Check("print & press: ticked Collar Patch appears with its colour", printed.Contains("Collar Patch & Color:") && printed.Contains("RED"), "");
-        Check("submit: the save location is not shown", !(o.StatusText ?? "").Contains("Documents") && !(o.StatusText ?? "").Contains("\\"), o.StatusText ?? "");
+        Check($"{id}: ticked Collar Patch appears with its colour", printed.Contains("Collar Patch & Color:") && printed.Contains("RED"), "");
+        Check($"{id} submit: the save location is not shown", !(o.StatusText ?? "").Contains("Documents") && !(o.StatusText ?? "").Contains("\\"), o.StatusText ?? "");
         o.Detach();
     }
 
