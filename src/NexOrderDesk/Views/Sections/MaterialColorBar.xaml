@@ -68,6 +68,7 @@
               <TextBox Style="{StaticResource ValueBox}" FontSize="11" FontWeight="Bold" CharacterCasing="Upper" TextAlignment="Center"
                        h:FitText.Enabled="True" h:FitText.MinSize="6" Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
                        ToolTip="Optional words for this material, e.g. FRONT &amp; BACK, SLEEVES, COLLAR"/>
+              <Viewbox StretchDirection="DownOnly" Margin="4,0" IsHitTestVisible="False">
               <TextBlock Text="e.g. front &amp; back" FontSize="9.5" FontStyle="Italic" Foreground="#A0A4AE" IsHitTestVisible="False"
                          HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock.Style>
@@ -85,6 +86,7 @@
                   </Style>
                 </TextBlock.Style>
               </TextBlock>
+              </Viewbox>
             </Grid>
             <!-- colour (2.9.1, all order types): a plain text field like the material - default WHITE, type any colour name.
                  No swatches, colour circles or colour picker. -->

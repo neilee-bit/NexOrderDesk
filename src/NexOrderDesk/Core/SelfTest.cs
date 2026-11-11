@@ -407,7 +407,7 @@ public static class SelfTest
         foreach (var fe in FindAll<FrameworkElement>(root))
         {
             if (fe is not (ToggleButton or Button or TextBlock) || !IsShown(fe) || fe.ActualWidth <= 0) continue;
-            if (fe is TextBlock tb && (string.IsNullOrWhiteSpace(tb.Text) || tb.TextWrapping != TextWrapping.NoWrap)) continue;
+            if (fe is TextBlock tb && (string.IsNullOrWhiteSpace(tb.Text) || tb.TextWrapping != TextWrapping.NoWrap || tb.TextTrimming != TextTrimming.None)) continue;   // wraps or ends with "…" on purpose
             bool inViewbox = false;
             for (DependencyObject? d = VisualTreeHelper.GetParent(fe); d != null && d != root; d = VisualTreeHelper.GetParent(d))
                 if (d is Viewbox or ScrollViewer or System.Windows.Controls.Primitives.Popup) { inViewbox = true; break; }

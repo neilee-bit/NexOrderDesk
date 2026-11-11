@@ -34,7 +34,9 @@
           </Canvas>
         </Viewbox>
         <TextBlock Text="{Binding Caption, RelativeSource={RelativeSource AncestorType=UserControl}}" Margin="0,6,0,0" FontSize="12" FontWeight="SemiBold" Foreground="#6B7280" TextAlignment="Center"/>
-        <TextBlock Text="click, then Ctrl+V  ·  double-click to browse  ·  drag &amp; drop  ·  round handle = rotate  ·  double-click a picture = crop" FontSize="8" Foreground="#A0A4AE" TextAlignment="Center"/>
+        <!-- 2.9.1: wraps onto several lines instead of being cut off in narrow image boxes -->
+        <TextBlock Text="click, then Ctrl+V  ·  double-click to browse  ·  drag &amp; drop  ·  round handle = rotate  ·  double-click a picture = crop" FontSize="8" Foreground="#A0A4AE"
+                   TextAlignment="Center" TextWrapping="Wrap" Margin="8,2,8,0"/>
         <TextBlock Text="PNG, JPG, WEBP, SVG, GIF, BMP, TIFF" FontSize="7.5" Foreground="#B5B9C2" TextAlignment="Center"/>
       </StackPanel>
 
