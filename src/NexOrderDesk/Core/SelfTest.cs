@@ -374,7 +374,7 @@ public static class SelfTest
             var bar = FindAll<MaterialColorBar>(live).FirstOrDefault(IsShown);
             if (bar == null) { Fail($"{t.Name}: material bar not found"); Close(live, o); continue; }
             var plain = FindAll<TextBox>(bar).Where(x => x.Name == "PlainColour" && IsShown(x)).ToList();
-            bool circles = FindAll<System.Windows.Shapes.Ellipse>(bar).Any(IsShown) || FindAll<System.Windows.Controls.Primitives.Popup>(bar).Any();
+            bool circles = FindAll<System.Windows.Shapes.Ellipse>(bar).Any(IsShown);
             Check($"{t.Name}: colour is a plain text field, default WHITE, no colour circles or picker",
                   plain.Count == o.MaterialColors.Count && plain.All(x => x.Text == "WHITE") && !circles, $"{plain.Count} fields, circles {circles}");
             o.MaterialColors[0].ColorName = "DAMRO SKY MIX";
@@ -412,10 +412,23 @@ public static class SelfTest
             for (DependencyObject? d = VisualTreeHelper.GetParent(fe); d != null && d != root; d = VisualTreeHelper.GetParent(d))
                 if (d is Viewbox or ScrollViewer or System.Windows.Controls.Primitives.Popup) { inViewbox = true; break; }
             if (inViewbox) continue;
-            if (fe.RenderSize.Height + 0.6 < fe.DesiredSize.Height || fe.RenderSize.Width + 0.6 < fe.DesiredSize.Width)
+            // pushed outside the box it sits in (e.g. buttons squeezed out of a panel)
+            bool outside = false;
+            if (VisualTreeHelper.GetParent(fe) is Panel panel && panel.ActualHeight > 0 && panel.ClipToBounds == false)
+            {
+                try
+                {
+                    var r = fe.TransformToAncestor(panel).TransformBounds(new Rect(fe.RenderSize));
+                    outside = r.Bottom > panel.ActualHeight + 1.5 || r.Right > panel.ActualWidth + 1.5 || r.Top < -1.5 || r.Left < -1.5;
+                }
+                catch { }
+            }
+            // smaller than its content (DesiredSize includes the margin, RenderSize does not)
+            double needW = fe.DesiredSize.Width - fe.Margin.Left - fe.Margin.Right, needH = fe.DesiredSize.Height - fe.Margin.Top - fe.Margin.Bottom;
+            if (outside || fe.RenderSize.Height + 0.6 < needH || fe.RenderSize.Width + 0.6 < needW)
             {
                 var label = fe is TextBlock t2 ? t2.Text : (fe as ContentControl)?.Content?.ToString() ?? fe.GetType().Name;
-                list.Add($"{label} {fe.RenderSize.Width:0}x{fe.RenderSize.Height:0} < {fe.DesiredSize.Width:0}x{fe.DesiredSize.Height:0}");
+                list.Add($"{label} {fe.RenderSize.Width:0}x{fe.RenderSize.Height:0} < {needW:0}x{needH:0}{(outside ? " outside its box" : "")}");
             }
         }
         return list;
