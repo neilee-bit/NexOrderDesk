@@ -288,8 +288,12 @@ public static class SelfTest
             var pills = FindAll<System.Windows.Controls.Primitives.ToggleButton>(FindAll<PrintMethodPanel>(live).First(IsShown)).Where(IsShown).ToList();
             bool allFit = pills.All(b =>
             {
-                var vb = FindAll<Viewbox>(b).FirstOrDefault();
-                return vb != null && b.ActualHeight >= 14 && vb.ActualWidth <= b.ActualWidth && vb.ActualHeight <= b.ActualHeight;
+                // 2.9.1 option cards: the text block (wrapping if needed) must fit inside the card, nothing cut
+                var tb = FindAll<TextBlock>(b).FirstOrDefault(x => x.Name == "Label");
+                if (tb == null) return false;
+                var r = tb.TransformToAncestor(b).TransformBounds(new Rect(tb.RenderSize));
+                return b.ActualHeight >= 18 && r.Left >= -0.5 && r.Top >= -0.5 && r.Right <= b.ActualWidth + 0.5 && r.Bottom <= b.ActualHeight + 0.5
+                       && tb.RenderSize.Height + 0.5 >= tb.DesiredSize.Height;
             });
             Check("print grid: every button's text fits inside it", pills.Count == 8 && allFit, string.Join(", ", pills.Select(b => $"{b.ActualWidth:0}x{b.ActualHeight:0}")));
             o.MorePrint!.IsOpen = true;

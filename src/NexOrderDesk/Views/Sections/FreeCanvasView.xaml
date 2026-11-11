@@ -18,7 +18,9 @@
   <DockPanel>
     <!-- compact toolbar (editing only) -->
     <DockPanel x:Name="Toolbar" DockPanel.Dock="Top" Margin="0,0,0,4" LastChildFill="True">
-      <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+      <!-- 2.9.1: in a narrow workspace the toolbar shrinks a little instead of running out of the box -->
+      <Viewbox DockPanel.Dock="Left" StretchDirection="DownOnly" Stretch="Uniform" HorizontalAlignment="Left" MaxHeight="22">
+      <StackPanel Orientation="Horizontal">
         <Button Style="{StaticResource ToolBtn}" Click="OnAddText" ToolTip="Add a text box (or double-click empty space)">
           <TextBlock><Run Text="T" FontWeight="ExtraBold"/><Run Text="  Text"/></TextBlock>
         </Button>
@@ -37,6 +39,7 @@
         <Button Style="{StaticResource ToolBtn}" Content="Delete" Click="OnDeleteSelected" ToolTip="Remove the selected object (Del)"/>
         <Button Style="{StaticResource ToolBtn}" Content="Clear" Click="OnClear" ToolTip="Remove every text box and picture"/>
       </StackPanel>
+      </Viewbox>
       <TextBlock x:Name="HintText" Text="Ctrl+V pastes text or pictures  ·  drag &amp; drop files  ·  drag the edge to move, corner to resize"
                  FontSize="9" Foreground="#9AA0A9" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" Margin="6,0,2,0"/>
     </DockPanel>
