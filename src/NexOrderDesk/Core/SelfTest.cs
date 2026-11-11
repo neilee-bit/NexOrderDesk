@@ -332,7 +332,7 @@ public static class SelfTest
         var liveTexts = Texts(live);
         Check("material: note box between material and colour", liveTexts.Contains("FRONT & BACK") && liveTexts.Contains("e.g. front & back"), "");
         var pills = FindAll<System.Windows.Controls.Primitives.ToggleButton>(FindAll<PrintMethodPanel>(live).First(IsShown)).Where(IsShown).ToList();
-        Check("print method: bigger buttons", pills.Count >= 3 && pills.All(p => p.ActualHeight >= 20), string.Join(", ", pills.Select(p => p.ActualHeight.ToString("0"))));
+        Check("print method: bigger buttons", pills.Count >= 3 && pills.All(p => p.ActualHeight >= 22), string.Join(", ", pills.Select(p => p.ActualHeight.ToString("0"))));
         var bar = FindAll<ActionBar>(live).First();
         Check("action bar: small buttons", bar.ActualHeight <= 26 && FindAll<Button>(bar).Where(IsShown).All(b => b.ActualHeight <= 24), bar.ActualHeight.ToString("0"));
         o.SubmitCommand.Execute(null); Pump(); Pump();

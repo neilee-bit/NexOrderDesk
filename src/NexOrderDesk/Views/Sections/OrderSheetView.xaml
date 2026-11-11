@@ -19,8 +19,8 @@
         <Grid.ColumnDefinitions><ColumnDefinition Width="49*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="51*"/></Grid.ColumnDefinitions>
         <Grid>
           <Grid.RowDefinitions>
-            <RowDefinition Height="190*"/><RowDefinition Height="6"/><RowDefinition Height="Auto" MinHeight="28"/><RowDefinition Height="6"/>
-            <RowDefinition Height="120*"/><RowDefinition Height="6"/><RowDefinition Height="74*"/>
+            <RowDefinition Height="180*"/><RowDefinition Height="6"/><RowDefinition Height="Auto" MinHeight="28"/><RowDefinition Height="6"/>
+            <RowDefinition Height="112*"/><RowDefinition Height="6"/><RowDefinition Height="94*"/>
           </Grid.RowDefinitions>
           <Grid>
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>

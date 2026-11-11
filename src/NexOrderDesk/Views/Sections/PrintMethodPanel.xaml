@@ -6,7 +6,7 @@
       <ItemsPanelTemplate x:Key="ThreeCols"><UniformGrid Columns="{Binding DataContext.PrintGridColumns, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}"/></ItemsPanelTemplate>
       <Style x:Key="PrintPill" TargetType="ToggleButton" BasedOn="{StaticResource PillToggle}">
         <Setter Property="Margin" Value="0,0,4,3"/><Setter Property="FontSize" Value="10.5"/>
-        <Setter Property="Height" Value="NaN"/><Setter Property="MinHeight" Value="16"/><Setter Property="VerticalAlignment" Value="Stretch"/>
+        <Setter Property="Height" Value="NaN"/><Setter Property="MinHeight" Value="20"/><Setter Property="VerticalAlignment" Value="Stretch"/>
         <Style.Triggers>
           <DataTrigger Binding="{Binding Compact, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}" Value="True">
             <Setter Property="FontSize" Value="8.5"/><Setter Property="MinHeight" Value="14"/><Setter Property="Margin" Value="0,0,3,2"/>
