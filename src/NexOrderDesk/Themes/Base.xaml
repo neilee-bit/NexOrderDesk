@@ -206,6 +206,56 @@
   </Style>
 
   <!-- Flat combo box -->
+  <!-- ===== Shared option card (2.9.1): every selectable option on the sheets uses it, inside h:OptionGrid =====
+       Rectangular card, the whole card is clickable, long names wrap onto two lines (never cut), selected = theme colour + bold.
+       OptionCheckCard adds a tick box for options where several can be ticked. -->
+  <Style x:Key="OptionCard" TargetType="ToggleButton">
+    <Setter Property="FontSize" Value="10"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Padding" Value="7,3"/>
+    <Setter Property="MinHeight" Value="20"/>
+    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    <Setter Property="VerticalAlignment" Value="Stretch"/>
+    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ToggleButton">
+          <Border x:Name="Bd" CornerRadius="6" Background="#F6F7F9" BorderBrush="#D5D9DF" BorderThickness="1" Padding="{TemplateBinding Padding}">
+            <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+              <Border x:Name="Box" Width="9" Height="9" CornerRadius="2" BorderBrush="#9AA0A9" BorderThickness="1" Margin="0,0,4,0"
+                      VerticalAlignment="Center" Visibility="Collapsed">
+                <Path x:Name="Tick" Data="M0.5,4 L3,6.5 L7.5,1" Stroke="#1E1E1E" StrokeThickness="1.4" Visibility="Hidden" Stretch="Uniform"/>
+              </Border>
+              <TextBlock x:Name="Label" Grid.Column="1" Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                         TextWrapping="Wrap" TextAlignment="Center" VerticalAlignment="Center"/>
+            </Grid>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="Tag" Value="check"><Setter TargetName="Box" Property="Visibility" Value="Visible"/></Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="BorderBrush" Value="#8F96A0"/><Setter TargetName="Bd" Property="Background" Value="#EEF0F3"/>
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBrush}"/>
+              <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentDarkBrush}"/>
+              <Setter TargetName="Label" Property="FontWeight" Value="Bold"/>
+              <Setter TargetName="Tick" Property="Visibility" Value="Visible"/>
+              <Setter TargetName="Tick" Property="Stroke" Value="{DynamicResource OnAccentBrush}"/>
+              <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource OnAccentBrush}"/>
+              <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="OptionCheckCard" TargetType="ToggleButton" BasedOn="{StaticResource OptionCard}">
+    <Setter Property="Tag" Value="check"/>
+  </Style>
+
   <!-- Slim, rounded scroll bar for drop-down lists (6 px, no arrow buttons) -->
   <Style x:Key="SlimScrollBar" TargetType="ScrollBar">
     <Setter Property="Width" Value="6"/>

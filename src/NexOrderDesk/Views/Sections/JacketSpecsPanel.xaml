@@ -42,6 +42,8 @@
   </UserControl.Resources>
 
   <Border Style="{StaticResource Card}" Padding="8,4">
+   <!-- 2.9.1: if the content ever needs more height than the card has, it is scaled down a little - never cut off -->
+   <h:FitBox>
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition Height="Auto"/>
@@ -140,14 +142,15 @@
                      Visibility="{Binding ShowNoJacketExtras, Converter={StaticResource BoolToVis}}"/>
         </DockPanel>
         <ItemsControl ItemsSource="{Binding JacketExtrasView}">
-          <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><h:OptionGrid MaxColumns="3" MinCellWidth="52" MinCellHeight="18" Gap="3"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate DataType="{x:Type m:CheckOption}">
-              <ToggleButton Style="{StaticResource ChipToggle}" Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}" ToolTip="{Binding Name}"/>
+              <ToggleButton Style="{StaticResource OptionCheckCard}" FontSize="9" Padding="5,2" MinHeight="18" Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}" ToolTip="{Binding Name}"/>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
       </StackPanel>
     </Grid>
+     </h:FitBox>
   </Border>
 </UserControl>

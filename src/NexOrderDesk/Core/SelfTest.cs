@@ -385,50 +385,117 @@ public static class SelfTest
         }
     }
 
-    /// <summary>Every order type, editing / submitted / printed: no button or text squeezed smaller than its content (cut-off text).</summary>
+    /// <summary>
+    /// Every order type, editing / submitted / printed - with the normal option lists and again with long lists
+    /// (13 print types, long additional-custom names): no option or text cut off, hidden or pushed out of its box.
+    /// </summary>
     private static void NoClipping(SettingsService s)
     {
-        foreach (var t in s.OrderTypes)
+        foreach (var t in s.OrderTypes) ClipRun(s, t, "");
+        var extraPrint = new[] { "HEAT TRANSFER VINYL", "PUFF PRINT", "PLASTISOL HIGH DENSITY PRINT", "WATER BASED DISCHARGE", "FOIL", "GLITTER", "REFLECTIVE PRINT" };
+        var extraBottom = new[] { "REINFORCED KNEE PANELS", "ZIP POCKET", "REFLECTIVE PIPING ON BOTH SIDES" };
+        var extraJacket = new[] { "DETACHABLE HOOD WITH TOGGLE", "INNER MOBILE POCKET", "THUMB HOLES" };
+        foreach (var x in extraPrint) s.PrintTypes.Add(x);
+        foreach (var x in extraBottom) s.BottomExtras.Add(x);
+        foreach (var x in extraJacket) s.JacketExtras.Add(x);
+        try { foreach (var t in s.OrderTypes) ClipRun(s, t, " (long lists)"); }
+        finally
         {
-            var o = new OrderViewModel(t, s, 9700) { OrderName = "SELFTEST CLIP" };
-            var live = Host(o);
-            Check($"{t.Name}: nothing cut off while editing", Clipped(live).Count == 0, string.Join("; ", Clipped(live).Take(6)));
-            o.SubmitCommand.Execute(null); Pump(); Pump();
-            Check($"{t.Name}: nothing cut off after Submit", Clipped(live).Count == 0, string.Join("; ", Clipped(live).Take(6)));
-            var printed = Render(o);
-            Check($"{t.Name}: nothing cut off in print / PDF", Clipped(printed).Count == 0, string.Join("; ", Clipped(printed).Take(6)));
-            Close(live, o);
+            foreach (var x in extraPrint) s.PrintTypes.Remove(x);
+            foreach (var x in extraBottom) s.BottomExtras.Remove(x);
+            foreach (var x in extraJacket) s.JacketExtras.Remove(x);
+            s.Save();
         }
     }
 
+    private static void ClipRun(SettingsService s, OrderTypeDef t, string tag)
+    {
+        var o = new OrderViewModel(t, s, 9700) { OrderName = "SELFTEST CLIP" };
+        var live = Host(o);
+        var c = Clipped(live);
+        Check($"{t.Name}{tag}: nothing cut off while editing", c.Count == 0, string.Join("; ", c.Take(6)));
+        if (tag.Length > 0 && o.IsGarment) SelectionRun(o, live, t.Name);
+        foreach (var x in o.Extras.Concat(o.JacketExtras).Take(3)) x.IsSelected = true;
+        o.SubmitCommand.Execute(null); Pump(); Pump();
+        c = Clipped(live);
+        Check($"{t.Name}{tag}: nothing cut off after Submit", c.Count == 0, string.Join("; ", c.Take(6)));
+        var printed = Render(o);
+        c = Clipped(printed);
+        Check($"{t.Name}{tag}: nothing cut off in print / PDF", c.Count == 0, string.Join("; ", c.Take(6)));
+        Close(live, o);
+    }
+
+    /// <summary>Print types: select, the 2-type limit, deselect, second level (More), shown correctly on the submitted sheet.</summary>
+    private static void SelectionRun(OrderViewModel o, FrameworkElement live, string name)
+    {
+        var cards = FindAll<ToggleButton>(FindAll<PrintMethodPanel>(live).First(IsShown)).Where(IsShown).ToList();
+        var first = o.PrintMethods[0]; var second = o.PrintMethods[1]; var third = o.PrintMethods[2];
+        foreach (var m in o.PrintMethods) m.IsSelected = false;
+        Check($"{name}: every print type can be deselected", o.PrintMethods.All(m => !m.IsSelected), "");
+        Click(cards.First(c => Equals(c.Content, first.Name))); Click(cards.First(c => Equals(c.Content, second.Name)));
+        Check($"{name}: clicking a card selects it (and it shows as selected)", first.IsSelected && second.IsSelected &&
+              cards.Where(c => c.IsChecked == true).Select(c => c.Content as string).OrderBy(x => x).SequenceEqual(new[] { first.Name, second.Name }.OrderBy(x => x)), "");
+        Click(cards.First(c => Equals(c.Content, third.Name)));
+        Check($"{name}: a third choice replaces the oldest (max 2)", !first.IsSelected && second.IsSelected && third.IsSelected, "");
+        Click(cards.First(c => Equals(c.Content, third.Name)));
+        Check($"{name}: clicking a selected card deselects it", !third.IsSelected && second.IsSelected, "");
+        if (o.MorePrint != null)
+        {
+            var hidden = o.MorePrint.Items.Last();
+            hidden.IsSelected = true; Pump();
+            Check($"{name}: a print type from More ▾ can be chosen", hidden.IsSelected && o.PrintSummary.Contains(hidden.BannerName, StringComparison.OrdinalIgnoreCase), o.PrintSummary);
+            Check($"{name}: More ▾ shows how many are hidden", cards.Any(c => (c.Content as string ?? "").StartsWith("More")), "");
+        }
+        var chosen = o.PrintMethods.Where(m => m.IsSelected).Select(m => m.BannerName).ToList();
+        o.SubmitCommand.Execute(null); Pump(); Pump();
+        var pt = Texts(Render(o));
+        Check($"{name}: submitted sheet shows exactly the chosen print types", chosen.All(c => pt.Any(x => x.Contains(c, StringComparison.OrdinalIgnoreCase))) &&
+              !o.PrintMethods.Where(m => !m.IsSelected).Any(m => pt.Contains(m.Name)), string.Join(" + ", chosen) + " / " + o.PrintSummary);
+        o.EditCommand.Execute(null); Pump();
+    }
+
+    private static void Click(ToggleButton b)
+    {
+        var peer = new System.Windows.Automation.Peers.ToggleButtonAutomationPeer(b);
+        ((System.Windows.Automation.Provider.IToggleProvider)peer.GetPattern(System.Windows.Automation.Peers.PatternInterface.Toggle)).Toggle();
+        Pump();
+    }
+
+    /// <summary>Texts / buttons that are smaller than their content, or stick out of any box they sit in.</summary>
     private static List<string> Clipped(DependencyObject root)
     {
         var list = new List<string>();
         foreach (var fe in FindAll<FrameworkElement>(root))
         {
             if (fe is not (ToggleButton or Button or TextBlock) || !IsShown(fe) || fe.ActualWidth <= 0) continue;
-            if (fe is TextBlock tb && (string.IsNullOrWhiteSpace(tb.Text) || tb.TextWrapping != TextWrapping.NoWrap || tb.TextTrimming != TextTrimming.None)) continue;   // wraps or ends with "…" on purpose
-            bool inViewbox = false;
+            if (fe is TextBlock tb && (string.IsNullOrWhiteSpace(tb.Text) || tb.TextTrimming != TextTrimming.None)) continue;   // "…" on purpose
+            if (fe is TextBlock { TextWrapping: not TextWrapping.NoWrap } wrapped && !(wrapped.TemplatedParent is ToggleButton)) continue;
+            bool skip = false;
             for (DependencyObject? d = VisualTreeHelper.GetParent(fe); d != null && d != root; d = VisualTreeHelper.GetParent(d))
-                if (d is Viewbox or ScrollViewer or System.Windows.Controls.Primitives.Popup) { inViewbox = true; break; }
-            if (inViewbox) continue;
-            // pushed outside the box it sits in (e.g. buttons squeezed out of a panel)
-            bool outside = false;
-            if (VisualTreeHelper.GetParent(fe) is Panel panel && panel.ActualHeight > 0 && panel.ClipToBounds == false)
-            {
-                try
-                {
-                    var r = fe.TransformToAncestor(panel).TransformBounds(new Rect(fe.RenderSize));
-                    outside = r.Bottom > panel.ActualHeight + 1.5 || r.Right > panel.ActualWidth + 1.5 || r.Top < -1.5 || r.Left < -1.5;
-                }
-                catch { }
-            }
+                if (d is Viewbox or ScrollViewer or Popup or Canvas) { skip = true; break; }
+            if (skip) continue;
+            string? why = null;
             // smaller than its content (DesiredSize includes the margin, RenderSize does not)
             double needW = fe.DesiredSize.Width - fe.Margin.Left - fe.Margin.Right, needH = fe.DesiredSize.Height - fe.Margin.Top - fe.Margin.Bottom;
-            if (outside || fe.RenderSize.Height + 0.6 < needH || fe.RenderSize.Width + 0.6 < needW)
+            if (fe.RenderSize.Height + 0.6 < needH || fe.RenderSize.Width + 0.6 < needW) why = $"{fe.RenderSize.Width:0}x{fe.RenderSize.Height:0} < {needW:0}x{needH:0}";
+            // sticking out of ANY box above it (a box shorter than its options cuts them off)
+            if (why == null)
+                for (DependencyObject? d = VisualTreeHelper.GetParent(fe); d != null && d != root; d = VisualTreeHelper.GetParent(d))
+                {
+                    if (d is not FrameworkElement box || box.ActualHeight <= 0 || box is FitBox) continue;
+                    if (d is Panel { ClipToBounds: false } && VisualTreeHelper.GetParent(d) is ItemsPresenter) { }
+                    try
+                    {
+                        var r = fe.TransformToAncestor(box).TransformBounds(new Rect(fe.RenderSize));
+                        if (r.Bottom > box.ActualHeight + 2 || r.Right > box.ActualWidth + 2 || r.Top < -2 || r.Left < -2)
+                        { why = $"outside {box.GetType().Name} {box.ActualWidth:0}x{box.ActualHeight:0} (at {r.Left:0},{r.Top:0} {r.Width:0}x{r.Height:0})"; break; }
+                    }
+                    catch { break; }
+                }
+            if (why != null)
             {
                 var label = fe is TextBlock t2 ? t2.Text : (fe as ContentControl)?.Content?.ToString() ?? fe.GetType().Name;
-                list.Add($"{label} {fe.RenderSize.Width:0}x{fe.RenderSize.Height:0} < {needW:0}x{needH:0}{(outside ? " outside its box" : "")}");
+                list.Add($"{label} {why}");
             }
         }
         return list;

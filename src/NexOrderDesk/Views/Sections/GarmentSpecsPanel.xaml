@@ -44,6 +44,8 @@
   </UserControl.Resources>
 
   <Border Style="{StaticResource Card}" Padding="8,4">
+   <!-- 2.9.1: if the content ever needs more height than the card has, it is scaled down a little - never cut off -->
+   <h:FitBox>
    <Grid>
     <!-- T-shirt / Cut and Print / custom tops: the full spec list -->
     <Grid Visibility="{Binding IsStandardTops, Converter={StaticResource BoolToVis}}">
@@ -189,5 +191,6 @@
       </Grid>
     </UniformGrid>
    </Grid>
+     </h:FitBox>
   </Border>
 </UserControl>

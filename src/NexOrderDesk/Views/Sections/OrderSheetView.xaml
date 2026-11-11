@@ -20,7 +20,7 @@
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="180*"/><RowDefinition Height="6"/><RowDefinition Height="Auto" MinHeight="28"/><RowDefinition Height="6"/>
-            <RowDefinition Height="112*"/><RowDefinition Height="6"/><RowDefinition Height="94*"/>
+            <RowDefinition Height="112*"/><RowDefinition Height="6"/><RowDefinition Height="Auto" MinHeight="64"/>
           </Grid.RowDefinitions>
           <Grid>
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
@@ -44,7 +44,7 @@
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="160*"/><RowDefinition Height="6"/><RowDefinition Height="Auto" MinHeight="28"/><RowDefinition Height="6"/>
-            <RowDefinition Height="200*"/><RowDefinition Height="6"/><RowDefinition Height="50*" MinHeight="44"/>
+            <RowDefinition Height="200*"/><RowDefinition Height="6"/><RowDefinition Height="Auto" MinHeight="48"/>
           </Grid.RowDefinitions>
           <Grid>
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
@@ -69,7 +69,7 @@
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="175*"/><RowDefinition Height="6"/><RowDefinition Height="Auto" MinHeight="34"/><RowDefinition Height="6"/>
-            <RowDefinition Height="150*"/><RowDefinition Height="6"/><RowDefinition Height="50*" MinHeight="44"/>
+            <RowDefinition Height="150*"/><RowDefinition Height="6"/><RowDefinition Height="Auto" MinHeight="48"/>
           </Grid.RowDefinitions>
           <Grid>
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>

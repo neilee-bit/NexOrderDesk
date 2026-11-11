@@ -2,21 +2,21 @@
   <!-- Compact="True" (bottoms / shorts): thinner header, smaller pills in 4 columns -->
   <Border Style="{StaticResource Card}" Padding="8,5">
     <Border.Resources>
-      <!-- 3 columns for up to 6 print types, 4 for 7-8 (more than 8: the rest under "More ▾") -->
-      <ItemsPanelTemplate x:Key="ThreeCols"><UniformGrid Columns="{Binding DataContext.PrintGridColumns, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}"/></ItemsPanelTemplate>
-      <Style x:Key="PrintPill" TargetType="ToggleButton" BasedOn="{StaticResource PillToggle}">
-        <Setter Property="Margin" Value="0,0,4,3"/><Setter Property="FontSize" Value="10.5"/>
-        <Setter Property="Height" Value="NaN"/><Setter Property="MinHeight" Value="20"/><Setter Property="VerticalAlignment" Value="Stretch"/>
+      <!-- 2.9.1: shared option grid - columns from the real text widths, rows added automatically, nothing cut off -->
+      <ItemsPanelTemplate x:Key="Grid4"><h:OptionGrid MaxColumns="4" MinCellWidth="64" MinCellHeight="22" Gap="4"/></ItemsPanelTemplate>
+      <ItemsPanelTemplate x:Key="Grid4Compact"><h:OptionGrid MaxColumns="4" MinCellWidth="56" MinCellHeight="19" Gap="3"/></ItemsPanelTemplate>
+      <Style x:Key="PrintPill" TargetType="ToggleButton" BasedOn="{StaticResource OptionCard}">
+        <Setter Property="FontSize" Value="10.5"/>
         <Style.Triggers>
           <DataTrigger Binding="{Binding Compact, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}" Value="True">
-            <Setter Property="FontSize" Value="8.5"/><Setter Property="MinHeight" Value="14"/><Setter Property="Margin" Value="0,0,3,2"/>
+            <Setter Property="FontSize" Value="9"/><Setter Property="Padding" Value="5,2"/><Setter Property="MinHeight" Value="18"/>
           </DataTrigger>
         </Style.Triggers>
       </Style>
-      <ItemsPanelTemplate x:Key="FourCols"><UniformGrid Columns="4"/></ItemsPanelTemplate>
     </Border.Resources>
     <Grid>
       <!-- 2.9: the print-type buttons fill all the space below the title (bigger click areas) -->
+      <!-- 2.9.1: the box is as tall as its options need (rows added automatically) -->
       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="4"/><RowDefinition Height="*"/></Grid.RowDefinitions>
       <Border CornerRadius="5" Background="{DynamicResource AccentBrush}">
         <Border.Style>
@@ -57,9 +57,9 @@
       <ItemsControl Grid.Row="2" ItemsSource="{Binding PrintGridItems}">
         <ItemsControl.Style>
           <Style TargetType="ItemsControl">
-            <Setter Property="ItemsPanel" Value="{StaticResource ThreeCols}"/>
+            <Setter Property="ItemsPanel" Value="{StaticResource Grid4}"/>
             <Style.Triggers>
-              <DataTrigger Binding="{Binding Compact, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}" Value="True"><Setter Property="ItemsPanel" Value="{StaticResource FourCols}"/></DataTrigger>
+              <DataTrigger Binding="{Binding Compact, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}" Value="True"><Setter Property="ItemsPanel" Value="{StaticResource Grid4Compact}"/></DataTrigger>
               <!-- submitted: no small buttons under the title (the choice is in the title row) -->
               <Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Visibility" Value="Collapsed"/></Trigger>
             </Style.Triggers>
@@ -83,11 +83,11 @@
                   <StackPanel>
                     <TextBlock Text="MORE PRINT TYPES - select up to 2 in total" FontSize="9" FontWeight="Bold" Foreground="#8A8F98" Margin="2,0,0,6"/>
                     <ItemsControl ItemsSource="{Binding Items}">
-                      <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemsPanel><ItemsPanelTemplate><h:OptionGrid MaxColumns="2" MinCellWidth="110" MinCellHeight="26" Gap="5"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                       <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type m:PrintMethodOption}">
-                          <ToggleButton Style="{StaticResource PillToggle}" Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                        Height="26" FontSize="11" Margin="0,0,5,5" ToolTip="{Binding Name}"/>
+                          <ToggleButton Style="{StaticResource OptionCard}" Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                        FontSize="11" ToolTip="{Binding Name}"/>
                         </DataTemplate>
                       </ItemsControl.ItemTemplate>
                     </ItemsControl>
