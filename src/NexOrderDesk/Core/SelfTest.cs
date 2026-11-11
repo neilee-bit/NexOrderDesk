@@ -364,7 +364,27 @@ public static class SelfTest
             var pills = FindAll<System.Windows.Controls.Primitives.ToggleButton>(panel).Where(IsShown).ToList();
             var title = FindAll<TextBlock>(panel).FirstOrDefault(t => IsShown(t) && t.Text == o.PrintSummary);
             Check($"{layout}: submitted print method only in the title row", pills.Count == 0 && title != null, $"{pills.Count} small buttons");
+            // 2.9.1: the submitted print method is a compact row like the material row - not a big box
+            var bar = FindAll<MaterialColorBar>(printed).FirstOrDefault(IsShown);
+            Check($"{layout}: submitted print method row is compact", panel.ActualHeight <= 32,
+                  $"print row {panel.ActualHeight:0} px, material row {bar?.ActualHeight:0} px");
+            Check($"{layout}: submitted print method uses the normal field font", title != null && title.FontSize <= 12.5, $"{title?.FontSize}");
             o.Detach();
+
+            // long names: wrap inside the row, the row grows at most one line, nothing cut off
+            const string longName = "DIRECT TO FILM WITH GLITTER FINISH";
+            s.PrintTypes.Add(longName);
+            var lo = NewOrder(s, layout);
+            foreach (var m in lo.PrintMethods) m.IsSelected = false;
+            foreach (var m in lo.PrintMethods.OrderByDescending(m => m.BannerName.Length).Take(2)) m.IsSelected = true;
+            lo.SubmitCommand.Execute(null); Pump(); Pump();
+            var lp = Render(lo);
+            var lpanel = FindAll<PrintMethodPanel>(lp).FirstOrDefault(IsShown);
+            var c = Clipped(lp);
+            Check($"{layout}: long print method names fit the submitted row", lpanel != null && lpanel.ActualHeight <= 48 && c.Count == 0,
+                  $"{lo.PrintSummary} / {lpanel?.ActualHeight:0} px / {string.Join("; ", c.Take(4))}");
+            s.PrintTypes.Remove(longName); s.Save();
+            lo.Detach();
         }
     }
 
@@ -425,6 +445,7 @@ public static class SelfTest
         c = Clipped(live);
         Check($"{t.Name}{tag}: nothing cut off after Submit", c.Count == 0, string.Join("; ", c.Take(6)));
         var printed = Render(o);
+        if (tag.Length > 0 && t.Id is "tshirt" or "cutprint" or "bottoms") Shot(printed, t.Name + " Submitted");
         c = Clipped(printed);
         Check($"{t.Name}{tag}: nothing cut off in print / PDF", c.Count == 0, string.Join("; ", c.Take(6)));
         Close(live, o);

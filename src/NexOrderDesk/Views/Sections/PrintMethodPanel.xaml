@@ -1,6 +1,17 @@
 <UserControl x:Class="NexOrderDesk.Views.Sections.PrintMethodPanel" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:NexOrderDesk.Views.Sections" xmlns:m="clr-namespace:NexOrderDesk.Models" xmlns:h="clr-namespace:NexOrderDesk.Core">
   <!-- Compact="True" (bottoms / shorts): thinner header, smaller pills in 4 columns -->
-  <Border Style="{StaticResource Card}" Padding="8,5">
+  <Grid>
+  <!-- ===== editing: title + print-type buttons (2.9.1: this card owns its minimum height, not the sheet row) ===== -->
+  <Border Padding="8,5">
+    <Border.Style>
+      <Style TargetType="Border" BasedOn="{StaticResource Card}">
+        <Setter Property="MinHeight" Value="64"/>
+        <Style.Triggers>
+          <DataTrigger Binding="{Binding Compact, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}" Value="True"><Setter Property="MinHeight" Value="48"/></DataTrigger>
+          <Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Visibility" Value="Collapsed"/></Trigger>
+        </Style.Triggers>
+      </Style>
+    </Border.Style>
     <Border.Resources>
       <!-- 2.9.1: shared option grid - columns from the real text widths, rows added automatically, nothing cut off -->
       <ItemsPanelTemplate x:Key="Grid4"><h:OptionGrid MaxColumns="4" MinCellWidth="64" MinCellHeight="22" Gap="4"/></ItemsPanelTemplate>
@@ -24,33 +35,16 @@
             <Setter Property="Height" Value="24"/>
             <Style.Triggers>
               <DataTrigger Binding="{Binding Compact, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}" Value="True"><Setter Property="Height" Value="17"/></DataTrigger>
-              <!-- 2.9.1: submitted sheet / print / PDF - only this title row, filling the whole box -->
-              <Trigger Property="h:OutputMode.IsActive" Value="True">
-                <Setter Property="Height" Value="NaN"/><Setter Property="Grid.RowSpan" Value="3"/>
-              </Trigger>
             </Style.Triggers>
           </Style>
         </Border.Style>
         <Grid>
-          <Viewbox Margin="26,0">
-            <Viewbox.Style>
-              <Style TargetType="Viewbox">
-                <Setter Property="StretchDirection" Value="DownOnly"/>
-                <Style.Triggers>
-                  <!-- submitted: the print method is shown big in the row (never bigger than 30 pt) -->
-                  <Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="StretchDirection" Value="Both"/><Setter Property="MaxHeight" Value="34"/><Setter Property="Margin" Value="12,2"/></Trigger>
-                </Style.Triggers>
-              </Style>
-            </Viewbox.Style>
+          <Viewbox Margin="26,0" StretchDirection="DownOnly">
             <TextBlock Text="{Binding PrintSummary}" FontSize="17" FontWeight="ExtraBold" Foreground="{DynamicResource OnAccentBrush}"/>
           </Viewbox>
           <Button Content="&#x2699;" Width="16" Height="15" HorizontalAlignment="Right" Margin="0,0,4,0" FontSize="10"
                   Click="OnManage" ToolTip="Add / rename / remove print types">
-            <Button.Style>
-              <Style TargetType="Button" BasedOn="{StaticResource ActionButton}">
-                <Style.Triggers><Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Visibility" Value="Collapsed"/></Trigger></Style.Triggers>
-              </Style>
-            </Button.Style>
+            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource ActionButton}"/></Button.Style>
           </Button>
         </Grid>
       </Border>
@@ -60,8 +54,6 @@
             <Setter Property="ItemsPanel" Value="{StaticResource Grid4}"/>
             <Style.Triggers>
               <DataTrigger Binding="{Binding Compact, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}" Value="True"><Setter Property="ItemsPanel" Value="{StaticResource Grid4Compact}"/></DataTrigger>
-              <!-- submitted: no small buttons under the title (the choice is in the title row) -->
-              <Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Visibility" Value="Collapsed"/></Trigger>
             </Style.Triggers>
           </Style>
         </ItemsControl.Style>
@@ -100,4 +92,24 @@
       </ItemsControl>
     </Grid>
   </Border>
+
+  <!-- ===== submitted sheet / print / PDF (2.9.1): one compact row, the same size and style as the material row.
+       The row is only as tall as its text; long names wrap to a second line instead of growing a big box. ===== -->
+  <Border MinHeight="28" CornerRadius="14">
+    <Border.Style>
+      <Style TargetType="Border" BasedOn="{StaticResource Card}">
+        <Setter Property="Visibility" Value="Collapsed"/>
+        <Style.Triggers><Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Visibility" Value="Visible"/></Trigger></Style.Triggers>
+      </Style>
+    </Border.Style>
+    <Grid>
+      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+      <Border Background="{DynamicResource AccentBrush}" CornerRadius="14,16,16,14" Padding="9,0,12,0">
+        <TextBlock Text="PRINTING METHOD" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource OnAccentBrush}"/>
+      </Border>
+      <TextBlock x:Name="SubmittedMethod" Grid.Column="1" Text="{Binding PrintSummary}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextBrush}"
+                 TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,4,10,4"/>
+    </Grid>
+  </Border>
+  </Grid>
 </UserControl>
