@@ -238,8 +238,7 @@ public static class SelfTest
             var ft = new FormattedText(box.Text, System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
                 new Typeface(box.FontFamily, box.FontStyle, box.FontWeight, box.FontStretch), box.FontSize, Brushes.Black, 1);
             if (box.TextWrapping == TextWrapping.Wrap) ft.MaxTextWidth = box.ActualWidth - 6;
-            var room = (VisualTreeHelper.GetParent(box) as FrameworkElement)?.ActualHeight ?? box.ActualHeight;
-            fits = box.FontSize < 14 && box.FontSize >= 6 && ft.Width <= box.ActualWidth && ft.Height <= Math.Max(room, box.ActualHeight);
+            fits = box.FontSize < 14 && box.FontSize >= 6 && ft.Width <= box.ActualWidth && ft.Height <= box.ActualHeight;
             info = $"font {box.FontSize}, {box.TextWrapping}, text {ft.Width:0}x{ft.Height:0} in box {box.ActualWidth:0}x{box.ActualHeight:0}";
         }
         Check("long order name fits its box (smaller / two lines)", fits, info);

@@ -45,7 +45,8 @@
                 <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"
                                   TextElement.Foreground="White" TextElement.FontWeight="Bold" TextElement.FontSize="10"/>
               </Border>
-              <ContentPresenter Grid.Row="1" VerticalAlignment="Center"/>
+              <!-- the value fills the area (text stays centred), so long values can use two lines -->
+              <ContentPresenter Grid.Row="1" VerticalAlignment="Stretch"/>
             </Grid>
           </Border>
         </ControlTemplate>
