@@ -36,25 +36,30 @@ public class OptionGrid : Panel
         var kids = Visible();
         if (kids.Count == 0) { _rows = 0; return new Size(0, 0); }
 
-        // 1. natural width of the longest option
         double natural = MinCellWidth;
         foreach (var k in kids) { k.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity)); natural = Math.Max(natural, k.DesiredSize.Width); }
+        int max = Math.Max(1, MaxColumns > 0 ? Math.Min(MaxColumns, kids.Count) : kids.Count);
+        double width = double.IsInfinity(available.Width) ? natural * max + Gap * (max - 1) : available.Width;
 
-        // 2. columns that fit, then balanced rows (9 options in max 4 columns -> 3 rows of 3, not 4+4+1)
-        double width = double.IsInfinity(available.Width) ? natural * Math.Min(kids.Count, Math.Max(1, MaxColumns)) : available.Width;
-        int fit = Math.Max(1, (int)Math.Floor((width + Gap) / (natural + Gap)));
-        int max = MaxColumns > 0 ? Math.Min(MaxColumns, kids.Count) : kids.Count;
-        int cols = Math.Max(1, Math.Min(fit, max));
-        // if even one column is narrower than the text, the cards wrap their text (step 3)
-        _rows = (int)Math.Ceiling(kids.Count / (double)cols);
-        _cols = (int)Math.Ceiling(kids.Count / (double)_rows);
-
-        // 3. measure every option in its real cell: wrapped text makes a cell taller
-        double cellW = Math.Max(1, (width - Gap * (_cols - 1)) / _cols);
-        _cellH = MinCellHeight;
-        foreach (var k in kids) { k.Measure(new Size(cellW, double.PositiveInfinity)); _cellH = Math.Max(_cellH, k.DesiredSize.Height); }
-
-        return new Size(double.IsInfinity(available.Width) ? cellW * _cols + Gap * (_cols - 1) : width, _rows * _cellH + Gap * (_rows - 1));
+        // try every column count that keeps cells at least MinCellWidth wide; keep the one with the lowest total height
+        // (a long name then wraps onto two lines instead of forcing extra rows); more columns win a tie
+        int bestCols = 1; double bestH = double.MaxValue, bestCell = MinCellHeight; int bestRows = kids.Count;
+        for (int cols = max; cols >= 1; cols--)
+        {
+            double cellW = (width - Gap * (cols - 1)) / cols;
+            if (cellW < MinCellWidth && cols > 1) continue;
+            int rows = (int)Math.Ceiling(kids.Count / (double)cols);
+            int balanced = (int)Math.Ceiling(kids.Count / (double)rows);           // 9 in 4 columns -> 3 x 3
+            cellW = (width - Gap * (balanced - 1)) / balanced;
+            double cellH = MinCellHeight;
+            foreach (var k in kids) { k.Measure(new Size(Math.Max(1, cellW), double.PositiveInfinity)); cellH = Math.Max(cellH, k.DesiredSize.Height); }
+            double total = rows * cellH + Gap * (rows - 1);
+            if (total < bestH - 0.5) { bestH = total; bestCols = balanced; bestCell = cellH; bestRows = rows; }
+        }
+        _cols = bestCols; _rows = bestRows; _cellH = bestCell;
+        double finalW = (width - Gap * (_cols - 1)) / _cols;
+        foreach (var k in kids) k.Measure(new Size(Math.Max(1, finalW), _cellH));
+        return new Size(double.IsInfinity(available.Width) ? width : available.Width, bestH);
     }
 
     protected override Size ArrangeOverride(Size final)
@@ -79,44 +84,35 @@ public class OptionGrid : Panel
 /// </summary>
 public class FitBox : Decorator
 {
-    private double _scale = 1, _need;
+    private double _scale = 1;
     /// <summary>1 = normal size; below 1 = the content was scaled down to fit.</summary>
     public double Scale => _scale;
 
     protected override Size MeasureOverride(Size available)
     {
-        if (Child == null) return new Size();
-        // how tall does the content need to be at this width?
-        Child.Measure(new Size(available.Width, double.PositiveInfinity));
-        _need = Child.DesiredSize.Height;
-        if (!double.IsInfinity(available.Height) && available.Height > 0 && _need > available.Height + 0.5)
-        {
-            _scale = available.Height / _need;
-            Child.Measure(new Size(available.Width / _scale, _need));
-        }
-        else
-        {
-            _scale = 1;
-            Child.Measure(available);
-        }
-        var d = Child.DesiredSize;
-        return new Size(Math.Min(d.Width * _scale, available.Width), Math.Min(d.Height * _scale, available.Height));
+        if (Child is not FrameworkElement child) return new Size();
+        // the content's natural height at this width (unscaled)
+        SetScale(child, 1);
+        child.Measure(new Size(available.Width, double.PositiveInfinity));
+        double need = child.DesiredSize.Height;
+        double s = !double.IsInfinity(available.Height) && available.Height > 0 && need > available.Height + 0.5 ? available.Height / need : 1;
+        SetScale(child, s);
+        child.Measure(available);
+        var d = child.DesiredSize;
+        return new Size(Math.Min(d.Width, available.Width), Math.Min(d.Height, available.Height));
     }
 
     protected override Size ArrangeOverride(Size final)
     {
-        if (Child == null) return final;
-        if (_scale < 1)
-        {
-            double s = Math.Min(_scale, final.Height / Math.Max(1, _need));
-            Child.Arrange(new Rect(0, 0, final.Width / s, _need));
-            Child.RenderTransform = new ScaleTransform(s, s);
-        }
-        else
-        {
-            Child.Arrange(new Rect(final));
-            Child.RenderTransform = Transform.Identity;
-        }
+        Child?.Arrange(new Rect(final));
         return final;
+    }
+
+    // LayoutTransform: the layout system itself gives the content more room and shrinks it to fit
+    private void SetScale(FrameworkElement child, double s)
+    {
+        if (Math.Abs(s - _scale) < 0.001 && (s == 1 ? child.LayoutTransform == Transform.Identity || child.LayoutTransform is null : child.LayoutTransform is ScaleTransform)) return;
+        _scale = s;
+        child.LayoutTransform = s >= 0.999 ? Transform.Identity : new ScaleTransform(s, s);
     }
 }
