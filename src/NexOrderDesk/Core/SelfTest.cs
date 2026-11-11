@@ -232,9 +232,20 @@ public static class SelfTest
         n.OrderName = "VERY LONG ORDER NAME FOR THE ANNUAL SPORTS MEET 2026 - HOUSE T-SHIRTS";
         var sheet = Render(n);
         var box = FindAll<TextBox>(sheet).FirstOrDefault(t => t.Text == n.OrderName);
-        var fits = box != null && box.FontSize < 14 && new FormattedText(box.Text, System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-            new Typeface(box.FontFamily, box.FontStyle, box.FontWeight, box.FontStretch), box.FontSize, Brushes.Black, 1).Width <= box.ActualWidth;
-        Check("long order name shrinks to fit its box", fits, box == null ? "not found" : $"font {box.FontSize}, box {box.ActualWidth:0}");
+        bool fits = false; string info = "not found";
+        if (box != null)
+        {
+            var ft = new FormattedText(box.Text, System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+                new Typeface(box.FontFamily, box.FontStyle, box.FontWeight, box.FontStretch), box.FontSize, Brushes.Black, 1);
+            if (box.TextWrapping == TextWrapping.Wrap) ft.MaxTextWidth = box.ActualWidth - 6;
+            fits = box.FontSize < 14 && box.FontSize >= 6 && ft.Width <= box.ActualWidth && ft.Height <= box.ActualHeight;
+            info = $"font {box.FontSize}, {box.TextWrapping}, text {ft.Width:0}x{ft.Height:0} in box {box.ActualWidth:0}x{box.ActualHeight:0}";
+        }
+        Check("long order name fits its box (smaller / two lines)", fits, info);
+        n.OrderName = "SPORTS MEET 2026 HOUSE T-SHIRTS";
+        sheet = Render(n);
+        box = FindAll<TextBox>(sheet).FirstOrDefault(t => t.Text == n.OrderName);
+        Check("medium order name stays on one line", box != null && box.TextWrapping == TextWrapping.NoWrap, box?.FontSize.ToString() ?? "not found");
         n.Detach();
     }
 

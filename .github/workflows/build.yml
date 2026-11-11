@@ -131,6 +131,10 @@ jobs:
             exit 1
           }
           $lines | ForEach-Object { Write-Host $_ }
+          $all = Get-Content $out
+          $fails = @($all | Where-Object { $_ -like 'FAIL*' })
+          $head = @($all | Select-Object -First 1)
+          if ($fails.Count -gt 0) { $lines = $head + $fails }
           $body = ($lines | ForEach-Object { $_ -replace '%', '%25' }) -join '%0A'
           if ($p.ExitCode -ne 0) { Write-Host "::error title=Self-test failed (exit $($p.ExitCode))::$body"; exit 1 }
           Write-Host "::notice title=Self-test passed::$body"

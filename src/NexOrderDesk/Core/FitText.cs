@@ -51,7 +51,25 @@ public static class FitText
         double dip = 1;
         try { dip = VisualTreeHelper.GetDpi(tb).PixelsPerDip; } catch { }
         var face = new Typeface(tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch);
-        double size = SizeFor(tb.Text, avail, b, GetMinSize(tb), face, dip);
+        double min = GetMinSize(tb);
+        double size = SizeFor(tb.Text, avail, b, min, face, dip);
+        var wrap = TextWrapping.NoWrap;
+        // very long text: use two lines inside the box (if it is tall enough) before going smaller
+        double boxH = tb.ActualHeight - 2;
+        if (size < b * 0.7 && boxH >= 2 * 1.25 * 8 && !string.IsNullOrEmpty(tb.Text))
+        {
+            double two = Math.Min(b, Math.Min(SizeFor(tb.Text, avail * 1.8, b, 1, face, dip), boxH / (2 * 1.3)));
+            if (two > size)
+            {
+                // check that the text really fits in two lines at that size; step down if not
+                for (double t = Math.Floor(two * 4) / 4; t >= min; t -= 0.25)
+                {
+                    var ft = new FormattedText(tb.Text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, face, t, Brushes.Black, dip) { MaxTextWidth = avail };
+                    if (ft.Height <= boxH) { size = t; wrap = TextWrapping.Wrap; break; }
+                }
+            }
+        }
+        if (tb.TextWrapping != wrap) tb.TextWrapping = wrap;
         if (Math.Abs(tb.FontSize - size) > 0.01) tb.FontSize = size;
     }
 }
