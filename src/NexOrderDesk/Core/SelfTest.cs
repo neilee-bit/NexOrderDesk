@@ -49,6 +49,7 @@ public static class SelfTest
             Step("print grid"); PrintGrid(s);
             Step("bottoms layout"); BottomsLayout(s);
             Step("print method after submit"); PrintMethodSubmitted(s);
+            Step("piping after submit"); PipingSubmitted(s);
             Step("material colours"); Colours(s);
             Step("print and press"); PrintPress(s);
             Step("no cut-off text"); NoClipping(s);
@@ -352,6 +353,28 @@ public static class SelfTest
         Close(live, o);
     }
 
+    /// <summary>2.9.1: Piping only on the submitted sheet when ticked (every tops layout).</summary>
+    private static void PipingSubmitted(SettingsService s)
+    {
+        foreach (var id in new[] { "tshirt", "cutprint", "printpress" })
+        {
+            var type = s.OrderTypes.FirstOrDefault(t => t.Id == id);
+            if (type == null) { Fail($"{id}: order type missing"); continue; }
+            var o = new OrderViewModel(type, s, 9800) { OrderName = "SELFTEST PIPING" };
+            o.AdultShort.First(e => e.Label == "M").Quantity = 2;
+            var live = Texts(Host(o));
+            Check($"{id}: Piping row shown while editing", live.Contains("Piping & Piping Color:"), "");
+            o.SubmitCommand.Execute(null); Pump(); Pump();
+            var pt = Texts(Render(o));
+            Check($"{id}: unticked Piping left off the submitted sheet", !pt.Contains("Piping & Piping Color:") && !pt.Contains("No piping"), "");
+            Check($"{id}: no 'printing method' caption on the submitted sheet", !pt.Any(t => t.Contains("PRINTING METHOD")), string.Join(" | ", pt.Take(30)));
+            o.EditCommand.Execute(null); o.HasPiping = true; o.PipingText = "NAVY PIPING"; o.SubmitCommand.Execute(null); Pump(); Pump();
+            pt = Texts(Render(o));
+            Check($"{id}: ticked Piping shown with its details", pt.Contains("Piping & Piping Color:") && pt.Any(t => t.Contains("NAVY PIPING")), "");
+            o.Detach();
+        }
+    }
+
     private static void PrintMethodSubmitted(SettingsService s)
     {
         foreach (var layout in new[] { SheetLayout.Tops, SheetLayout.Jacket, SheetLayout.Bottoms })
@@ -578,7 +601,7 @@ public static class SelfTest
         var printed = Texts(Render(o));
         Check($"{id}: unticked Collar Patch not on the submitted sheet", !printed.Contains("Collar Patch & Color:"), "");
         var rows = FindAll<Grid>(Render(o)).Where(g => g.Name is "PressPipingRow" or "PlacketRow" && IsShown(g)).ToList();
-        Check($"{id}: submitted spec rows keep the normal row height", rows.Count == 2 && rows.All(r => r.ActualHeight <= 32),
+        Check($"{id}: submitted spec rows keep the normal row height", rows.Count == 1 && rows.All(r => r.ActualHeight <= 32),
               string.Join(", ", rows.Select(r => $"{r.Name} {r.ActualHeight:0}px")));
         Check($"{id}: ticked Placket with its colour on the sheet", printed.Contains("Placket & Color:") && printed.Contains("NAVY"), string.Join(" | ", printed.Take(40)));
         o.EditCommand.Execute(null); o.HasCollarPatch = true; o.CollarPatchColor = "RED"; o.SubmitCommand.Execute(null); Pump(); Pump();

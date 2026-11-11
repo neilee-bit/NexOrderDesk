@@ -41,6 +41,29 @@
       <Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Margin" Value="0,0,4,0"/><Setter Property="Cursor" Value="Hand"/>
       <Style.Triggers><Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Visibility" Value="Collapsed"/></Trigger></Style.Triggers>
     </Style>
+    <!-- 2.9.1: Piping is optional - on the submitted sheet / print / PDF it is left off when not ticked -->
+    <Style x:Key="PipingLabel" TargetType="Label" BasedOn="{StaticResource SpecLabel}">
+      <Style.Triggers>
+        <MultiDataTrigger>
+          <MultiDataTrigger.Conditions>
+            <Condition Binding="{Binding HasPiping}" Value="False"/>
+            <Condition Binding="{Binding Path=(h:OutputMode.IsActive), RelativeSource={RelativeSource Self}}" Value="True"/>
+          </MultiDataTrigger.Conditions>
+          <Setter Property="Visibility" Value="Collapsed"/>
+        </MultiDataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="PipingValue" TargetType="Grid">
+      <Style.Triggers>
+        <MultiDataTrigger>
+          <MultiDataTrigger.Conditions>
+            <Condition Binding="{Binding HasPiping}" Value="False"/>
+            <Condition Binding="{Binding Path=(h:OutputMode.IsActive), RelativeSource={RelativeSource Self}}" Value="True"/>
+          </MultiDataTrigger.Conditions>
+          <Setter Property="Visibility" Value="Collapsed"/>
+        </MultiDataTrigger>
+      </Style.Triggers>
+    </Style>
   </UserControl.Resources>
 
   <Border Style="{StaticResource Card}" Padding="8,4">
@@ -89,13 +112,13 @@
       </Grid>
 
       <!-- Piping (optional): [checkbox + label] [text: "No piping" until ticked, then type the piping details / colour] -->
-      <Label Grid.Row="5" Style="{StaticResource SpecLabel}">
+      <Label Grid.Row="5" x:Name="PipingLabelStd" Style="{StaticResource PipingLabel}">
         <DockPanel>
           <CheckBox Style="{StaticResource EditOnlyCheck}" IsChecked="{Binding HasPiping, Mode=TwoWay}" ToolTip="Tick if this order has piping"/>
           <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left"><TextBlock Style="{StaticResource LabelText}" Text="Piping &amp; Piping Color:"/></Viewbox>
         </DockPanel>
       </Label>
-      <Grid Grid.Row="5" Grid.Column="1">
+      <Grid Grid.Row="5" Grid.Column="1" Style="{StaticResource PipingValue}">
         <TextBox Style="{StaticResource RoundBox}" Text="{Binding PipingText, UpdateSourceTrigger=PropertyChanged}"
                  Visibility="{Binding HasPiping, Converter={StaticResource BoolToVis}}" ToolTip="Piping details / colour"/>
         <TextBlock Text="type piping details / colour…" Style="{StaticResource EmptyHint}"
@@ -112,7 +135,7 @@
                Visibility="{Binding ShowCollarLabel, Converter={StaticResource BoolToVis}}"/>
     </Grid>
 
-    <!-- Print and Press and Cut and Print (2.9 / 2.9.1): only Collar Patch, Placket and Piping. Collar Patch and Placket appear on the submitted
+    <!-- Print and Press and Cut and Print (2.9 / 2.9.1): only Collar Patch, Placket and Piping. Collar Patch, Placket and Piping appear on the submitted
          sheet only when ticked (the rows that are left share the space). -->
     <!-- 2.9.1 (also Cut and Print): on the submitted sheet the rows keep the normal row height and sit at the top,
          so one or two rows never stretch into big boxes. -->
@@ -183,7 +206,16 @@
         </Grid>
       </Grid>
 
-      <Grid x:Name="PressPipingRow" Style="{StaticResource PressRow}">
+      <Grid x:Name="PressPipingRow">
+        <Grid.Style><Style TargetType="Grid" BasedOn="{StaticResource PressRow}"><Style.Triggers>
+          <MultiDataTrigger>
+            <MultiDataTrigger.Conditions>
+              <Condition Binding="{Binding HasPiping}" Value="False"/>
+              <Condition Binding="{Binding Path=(h:OutputMode.IsActive), RelativeSource={RelativeSource Self}}" Value="True"/>
+            </MultiDataTrigger.Conditions>
+            <Setter Property="Visibility" Value="Collapsed"/>
+          </MultiDataTrigger>
+        </Style.Triggers></Style></Grid.Style>
         <Grid.ColumnDefinitions><ColumnDefinition Width="0.43*"/><ColumnDefinition Width="0.57*"/></Grid.ColumnDefinitions>
         <Label Style="{StaticResource SpecLabel}">
           <DockPanel>

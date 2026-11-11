@@ -93,23 +93,17 @@
     </Grid>
   </Border>
 
-  <!-- ===== submitted sheet / print / PDF (2.9.1): one compact row, the same size and style as the material row.
-       The row is only as tall as its text; long names wrap to a second line instead of growing a big box. ===== -->
-  <Border MinHeight="28" CornerRadius="14">
+  <!-- ===== submitted sheet / print / PDF (2.9.1): one compact accent row with just the chosen method(s),
+       e.g. FULL SUBLIMATION - no "printing method" caption. Long names wrap to a second line, no big box. ===== -->
+  <Border MinHeight="28" CornerRadius="14" Background="{DynamicResource AccentBrush}">
     <Border.Style>
-      <Style TargetType="Border" BasedOn="{StaticResource Card}">
+      <Style TargetType="Border">
         <Setter Property="Visibility" Value="Collapsed"/>
         <Style.Triggers><Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Visibility" Value="Visible"/></Trigger></Style.Triggers>
       </Style>
     </Border.Style>
-    <Grid>
-      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-      <Border Background="{DynamicResource AccentBrush}" CornerRadius="14,16,16,14" Padding="9,0,12,0">
-        <TextBlock Text="PRINTING METHOD" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource OnAccentBrush}"/>
-      </Border>
-      <TextBlock x:Name="SubmittedMethod" Grid.Column="1" Text="{Binding PrintSummary}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextBrush}"
-                 TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,4,10,4"/>
-    </Grid>
+    <TextBlock x:Name="SubmittedMethod" Text="{Binding PrintSummary}" FontSize="12.5" FontWeight="ExtraBold" Foreground="{DynamicResource OnAccentBrush}"
+               TextWrapping="Wrap" TextAlignment="Center" VerticalAlignment="Center" Margin="12,4"/>
   </Border>
   </Grid>
 </UserControl>
