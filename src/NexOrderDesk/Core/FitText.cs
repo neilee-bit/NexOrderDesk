@@ -55,7 +55,10 @@ public static class FitText
         double size = SizeFor(tb.Text, avail, b, min, face, dip);
         var wrap = TextWrapping.NoWrap;
         // very long text: use two lines inside the box (if it is tall enough) before going smaller
-        double boxH = tb.ActualHeight - 2;
+        // the box may be only one line tall (centred in its card) - the card's content area is the real limit
+        double boxH = tb.ActualHeight;
+        if (VisualTreeHelper.GetParent(tb) is FrameworkElement parent && parent.ActualHeight > boxH) boxH = parent.ActualHeight;
+        boxH -= 2;
         if (size < b * 0.7 && boxH >= 2 * 1.25 * 8 && !string.IsNullOrEmpty(tb.Text))
         {
             double two = Math.Min(b, Math.Min(SizeFor(tb.Text, avail * 1.8, b, 1, face, dip), boxH / (2 * 1.3)));
