@@ -39,10 +39,7 @@
           </Grid>
           <Grid Grid.Column="1" Visibility="{Binding IsActive, Converter={StaticResource BoolToVis}}">
             <TextBox Style="{StaticResource CellBox}" Text="{Binding QtyText, UpdateSourceTrigger=PropertyChanged}" Validation.ErrorTemplate="{x:Null}"/>
-            <!-- After Submit the sleeve type is printed next to each quantity -->
-            <TextBlock Text="{Binding SleeveTag}" FontSize="7.5" FontWeight="SemiBold" Foreground="{StaticResource MutedBrush}"
-                       HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0"
-                       Visibility="{Binding DataContext.IsEditable, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InvBoolToVis}}"/>
+            <!-- 2.9.1: no extra small sleeve tag after Submit - the column header already says S/S or L/S -->
           </Grid>
         </Grid>
       </Border>

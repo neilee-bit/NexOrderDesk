@@ -2,6 +2,7 @@ using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -50,6 +51,7 @@ public static class SelfTest
             Step("print method after submit"); PrintMethodSubmitted(s);
             Step("material colours"); Colours(s);
             Step("print and press"); PrintPress(s);
+            Step("no cut-off text"); NoClipping(s);
             Step("customers"); Customers(s);
             Step("customer box"); CustomerBoxUi(s);
             Step("done");
@@ -131,6 +133,7 @@ public static class SelfTest
         var printed = Texts(Render(o));
         Check("category/sleeve: printed on the submitted sheet", printed.Contains("Gents (L/S)") && printed.Contains("Lads (L/S)"),
               string.Join(" | ", printed.Take(60)));
+        Check("submitted sizes: no extra small S/S - L/S tags in the size rows", !printed.Contains("S/S") && !printed.Contains("L/S"), "");
         Check("category/sleeve: kept after Submit", o.AdultShortColumn.Header == "Gents (L/S)" && o.AdultLongColumn.Header == "Lads (L/S)", "");
         o.EditCommand.Execute(null); Pump();
         Check("category/sleeve: kept when edited again", o.AdultShortColumn.Category == "Gents" && o.AdultShortColumn.Sleeve == "L/S", "");
@@ -315,7 +318,7 @@ public static class SelfTest
               $"sizes {table.ActualWidth:0}, material bar {bar.ActualWidth:0}");
         var plain = FindAll<TextBox>(bar).FirstOrDefault(t => t.Name == "PlainColour" && IsShown(t));
         Check("bottoms: colour is a plain text field, default WHITE, no colour picker",
-              plain != null && plain.Text == "WHITE" && !FindAll<ColorBox>(bar).Any(IsShown), plain?.Text ?? "not found");
+              plain != null && plain.Text == "WHITE", plain?.Text ?? "not found");
         o.MaterialColors[0].ColorName = "NAVY";
         var printed = Texts(Render(o));
         Check("bottoms: typed colour printed", printed.Contains("NAVY"), "");
@@ -363,63 +366,59 @@ public static class SelfTest
 
     private static void Colours(SettingsService s)
     {
-        var o = NewOrder(s, SheetLayout.Tops);
-        var m = o.MaterialColors[0];
-        Check("colour: default WHITE", m.ColorName == "WHITE" && m.ColorFound, m.ColorName);
-        foreach (var (typed, hex) in new[] { ("BOTTLE GREEN", "#0B4D2C"), ("navy blue", "#1B2A4A"), ("MAROOM", "#6D1A2B"), ("ash melange", "#C3C5C7"), ("SKY", "#6EC1F0") })
+        // 2.9.1: the colour is a plain text field on every order type - default WHITE, any name, no swatches / picker
+        foreach (var t in s.OrderTypes.Where(t => t.Layout != SheetLayout.Dtf).GroupBy(t => t.Layout).Select(g => g.First()))
         {
-            m.ColorName = typed;
-            var got = (m.ColorBrush as SolidColorBrush)?.Color.ToString().Replace("#FF", "#");
-            Check($"colour: '{typed}' found automatically", m.ColorFound && got == hex, got ?? "");
+            var o = new OrderViewModel(t, s, 9600) { OrderName = "SELFTEST COLOUR" };
+            var live = Host(o);
+            var bar = FindAll<MaterialColorBar>(live).FirstOrDefault(IsShown);
+            if (bar == null) { Fail($"{t.Name}: material bar not found"); Close(live, o); continue; }
+            var plain = FindAll<TextBox>(bar).Where(x => x.Name == "PlainColour" && IsShown(x)).ToList();
+            bool circles = FindAll<System.Windows.Shapes.Ellipse>(bar).Any(IsShown) || FindAll<System.Windows.Controls.Primitives.Popup>(bar).Any();
+            Check($"{t.Name}: colour is a plain text field, default WHITE, no colour circles or picker",
+                  plain.Count == o.MaterialColors.Count && plain.All(x => x.Text == "WHITE") && !circles, $"{plain.Count} fields, circles {circles}");
+            o.MaterialColors[0].ColorName = "DAMRO SKY MIX";
+            Pump();
+            var printed = Texts(Render(o));
+            Check($"{t.Name}: any typed colour printed as typed", printed.Contains("DAMRO SKY MIX"), "");
+            Close(live, o);
         }
-        m.ColorName = "QWERTY ZZZ";
-        Check("colour: unknown name kept as typed", !m.ColorFound && m.ColorName == "QWERTY ZZZ", "");
-        m.ColorName = "BOTTLE GREEN";
-        var sug = ColorBox.Suggest("nav").Select(x => x.Name).ToList();
-        Check("colour: suggestions while typing ('nav')", sug.Contains("NAVY BLUE"), string.Join(", ", sug.Take(8)));
-        var printed = Texts(Render(o));
-        Check("colour: printed on the sheet", printed.Contains("BOTTLE GREEN"), "");
-        o.Detach();
+    }
 
-        Check("colour: DAMRO (teal light blue) can be typed and picked", ColorNames.Find("damro")?.Hex == "#45B3C6" &&
-              ColorBox.Suggest("dam").Any(x => x.Name == "DAMRO") && ColorFamilies.InFamily("Teals & Turquoise").Any(x => x.Name == "DAMRO"), "");
-        Check("colour: no long names in the palette and suggestions", ColorFamilies.Library.All(x => x.Name.Length <= 13) && ColorBox.Suggest("").All(x => x.Name.Length <= 13 || s.Colors.Any(c => c.Name == x.Name)),
-              string.Join(", ", ColorFamilies.Library.Where(x => x.Name.Length > 13).Select(x => x.Name)));
+    /// <summary>Every order type, editing / submitted / printed: no button or text squeezed smaller than its content (cut-off text).</summary>
+    private static void NoClipping(SettingsService s)
+    {
+        foreach (var t in s.OrderTypes)
+        {
+            var o = new OrderViewModel(t, s, 9700) { OrderName = "SELFTEST CLIP" };
+            var live = Host(o);
+            Check($"{t.Name}: nothing cut off while editing", Clipped(live).Count == 0, string.Join("; ", Clipped(live).Take(6)));
+            o.SubmitCommand.Execute(null); Pump(); Pump();
+            Check($"{t.Name}: nothing cut off after Submit", Clipped(live).Count == 0, string.Join("; ", Clipped(live).Take(6)));
+            var printed = Render(o);
+            Check($"{t.Name}: nothing cut off in print / PDF", Clipped(printed).Count == 0, string.Join("; ", Clipped(printed).Take(6)));
+            Close(live, o);
+        }
+    }
 
-        // advanced colour picker
-        Check("picker: every built-in colour is in a family", ColorFamilies.Library.All(sw => ColorFamilies.Names.Contains(ColorFamilies.FamilyOf(sw.Hex))) &&
-              ColorFamilies.Names.All(f => ColorFamilies.InFamily(f).Count() >= 8), string.Join(", ", ColorFamilies.Names.Select(f => f + " " + ColorFamilies.InFamily(f).Count())));
-        Check("picker: family sorting (navy, bottle green, maroon)", ColorFamilies.FamilyOf("#1B2A4A") == "Blues & Navy" && ColorFamilies.FamilyOf("#0B4D2C") == "Greens" &&
-              ColorFamilies.FamilyOf("#6D1A2B") == "Reds & Maroons", "");
-        var p = NewOrder(s, SheetLayout.Tops);
-        var w = new Window { Width = 1100, Height = 820, ShowInTaskbar = false, WindowStyle = WindowStyle.None, Left = -3000, Top = -3000,
-                             Content = new Border { Width = 840, Height = 592, Child = new OrderSheetView { DataContext = p } } };
-        w.Show(); Pump();
-        var cb = FindAll<ColorBox>(w).FirstOrDefault(IsShown);
-        if (cb == null) { Fail("picker: colour field not found"); w.Close(); p.Detach(); return; }
-        cb.OpenPicker(); Pump();
-        Check("picker: opens on the current colour's family", cb.IsPickerOpen && cb.Picker.CurrentFamily == "Whites & Creams" && cb.Picker.VisibleSwatches.Count >= 10,
-              $"{cb.IsPickerOpen} {cb.Picker.CurrentFamily} {cb.Picker.VisibleSwatches.Count}");
-        cb.Picker.ShowFamily("Blues & Navy"); Pump();
-        var navy = cb.Picker.VisibleSwatches.FirstOrDefault(x => x.Name == "NAVY BLUE");
-        Check("picker: palette family shows its colours", navy != null, string.Join(", ", cb.Picker.VisibleSwatches.Take(10).Select(x => x.Name)));
-        if (navy != null) cb.Picker.Use(navy.Name, navy.Hex);
-        Pump();
-        var pm = p.MaterialColors[0];
-        Check("picker: a palette click fills name and colour and closes", pm.ColorName == "NAVY BLUE" && pm.PickedHex == "#1B2A4A" && !cb.IsPickerOpen,
-              $"{pm.ColorName} {pm.PickedHex} {cb.IsPickerOpen}");
-        cb.OpenPicker(); Pump();
-        Check("picker: seven shades of the current colour", cb.Picker.ShadeSwatches.Count == 7 && cb.Picker.ShadeSwatches[5].Name == "DARK NAVY BLUE",
-              string.Join(", ", cb.Picker.ShadeSwatches.Select(x => x.Name)));
-        cb.Picker.SetCustom(140, 0.85, 0.45); Pump();
-        var customHex = cb.Picker.CurrentHex; var customName = cb.Picker.CurrentName;
-        Check("picker: custom colour gets the closest colour name", customName.Contains("GREEN"), customName + " " + customHex);
-        cb.Picker.Use(customName, customHex); Pump();
-        Check("picker: custom colour used exactly", pm.PickedHex == customHex && (pm.ColorBrush as SolidColorBrush)?.Color.ToString().Replace("#FF", "#") == customHex,
-              pm.PickedHex ?? "none");
-        pm.ColorName = "MAROON";
-        Check("picker: typing a name afterwards looks the name up again", pm.PickedHex == null && pm.CurrentHex == "#6D1A2B", pm.CurrentHex ?? "none");
-        w.Close(); p.Detach();
+    private static List<string> Clipped(DependencyObject root)
+    {
+        var list = new List<string>();
+        foreach (var fe in FindAll<FrameworkElement>(root))
+        {
+            if (fe is not (ToggleButton or Button or TextBlock) || !IsShown(fe) || fe.ActualWidth <= 0) continue;
+            if (fe is TextBlock tb && (string.IsNullOrWhiteSpace(tb.Text) || tb.TextWrapping != TextWrapping.NoWrap)) continue;
+            bool inViewbox = false;
+            for (DependencyObject? d = VisualTreeHelper.GetParent(fe); d != null && d != root; d = VisualTreeHelper.GetParent(d))
+                if (d is Viewbox or ScrollViewer or System.Windows.Controls.Primitives.Popup) { inViewbox = true; break; }
+            if (inViewbox) continue;
+            if (fe.RenderSize.Height + 0.6 < fe.DesiredSize.Height || fe.RenderSize.Width + 0.6 < fe.DesiredSize.Width)
+            {
+                var label = fe is TextBlock t2 ? t2.Text : (fe as ContentControl)?.Content?.ToString() ?? fe.GetType().Name;
+                list.Add($"{label} {fe.RenderSize.Width:0}x{fe.RenderSize.Height:0} < {fe.DesiredSize.Width:0}x{fe.DesiredSize.Height:0}");
+            }
+        }
+        return list;
     }
 
     private static void PrintPress(SettingsService s)

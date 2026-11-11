@@ -51,6 +51,9 @@
                 <Style TargetType="Grid">
                   <Setter Property="Width" Value="92"/>
                   <Style.Triggers>
+                    <DataTrigger Binding="{Binding DataContext.IsFlags, RelativeSource={RelativeSource AncestorType=s:MaterialColorBar}}" Value="True">
+                      <Setter Property="Width" Value="58"/>
+                    </DataTrigger>
                     <MultiDataTrigger>
                       <MultiDataTrigger.Conditions>
                         <Condition Binding="{Binding HasNote}" Value="False"/>
@@ -83,27 +86,24 @@
                 </TextBlock.Style>
               </TextBlock>
             </Grid>
-            <!-- bottoms / shorts (2.9): the colour is a plain text field (default WHITE) - no swatch, no colour picker -->
-            <Grid Grid.Column="5" Margin="6,2,4,2" VerticalAlignment="Center" MinWidth="110" MaxWidth="190"
-                  Visibility="{Binding DataContext.IsBottoms, RelativeSource={RelativeSource AncestorType=s:MaterialColorBar}, Converter={StaticResource BoolToVis}}">
-              <Border CornerRadius="9" Background="#F3F4F6" Margin="0,1"/>
-              <TextBox x:Name="PlainColour" Style="{StaticResource ValueBox}" FontSize="12" FontWeight="Bold" CharacterCasing="Upper" TextAlignment="Center"
-                       h:FitText.Enabled="True" Text="{Binding ColorName, UpdateSourceTrigger=PropertyChanged}" ToolTip="Colour (type it)"/>
-            </Grid>
-            <!-- colour: type a name, the swatch is found automatically; click the swatch for the colour picker -->
-            <s:ColorBox Grid.Column="5" Margin="4,2,2,2" VerticalAlignment="Center"
-                        Visibility="{Binding DataContext.IsBottoms, RelativeSource={RelativeSource AncestorType=s:MaterialColorBar}, Converter={StaticResource InvBoolToVis}}">
-              <s:ColorBox.Style>
-                <Style TargetType="s:ColorBox">
-                  <Setter Property="MaxWidth" Value="130"/><Setter Property="MinWidth" Value="80"/>
+            <!-- colour (2.9.1, all order types): a plain text field like the material - default WHITE, type any colour name.
+                 No swatches, colour circles or colour picker. -->
+            <Grid Grid.Column="5" Margin="6,2,4,2" VerticalAlignment="Center">
+              <Grid.Style>
+                <Style TargetType="Grid">
+                  <Setter Property="MinWidth" Value="110"/><Setter Property="MaxWidth" Value="190"/>
                   <Style.Triggers>
-                    <DataTrigger Binding="{Binding DataContext.ProminentColor, RelativeSource={RelativeSource AncestorType=s:MaterialColorBar}}" Value="True">
-                      <Setter Property="MaxWidth" Value="200"/><Setter Property="MinWidth" Value="120"/>
+                    <DataTrigger Binding="{Binding DataContext.IsFlags, RelativeSource={RelativeSource AncestorType=s:MaterialColorBar}}" Value="True">
+                      <Setter Property="MinWidth" Value="62"/><Setter Property="MaxWidth" Value="110"/>
                     </DataTrigger>
                   </Style.Triggers>
                 </Style>
-              </s:ColorBox.Style>
-            </s:ColorBox>
+              </Grid.Style>
+              <Border CornerRadius="9" Background="#F3F4F6" Margin="0,1"/>
+              <TextBox x:Name="PlainColour" Style="{StaticResource ValueBox}" FontSize="12" FontWeight="Bold" CharacterCasing="Upper" TextAlignment="Center"
+                       h:FitText.Enabled="True" h:FitText.MinSize="6" Text="{Binding ColorName, UpdateSourceTrigger=PropertyChanged}"
+                       ToolTip="Colour - type any colour name (default WHITE)"/>
+            </Grid>
             <Grid Grid.Column="6">
               <Grid.Style>
                 <Style TargetType="Grid">

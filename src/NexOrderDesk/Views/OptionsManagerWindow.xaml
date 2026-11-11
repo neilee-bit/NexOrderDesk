@@ -34,7 +34,7 @@
     </DataTemplate>
     <DataTemplate x:Key="ColorItem" DataType="{x:Type m:ColorOption}">
       <StackPanel Orientation="Horizontal">
-        <Ellipse Width="16" Height="16" Fill="{Binding Brush}" Stroke="#C8C8C8" StrokeThickness="0.8" Margin="2,0,9,0"/>
+
         <TextBlock Text="{Binding Name}" FontSize="13" VerticalAlignment="Center"/>
         
       </StackPanel>
@@ -73,8 +73,8 @@
       <StackPanel x:Name="HexRow" Grid.Row="1" Margin="0,8,0,0" Visibility="Collapsed">
         <StackPanel Orientation="Horizontal">
           <!-- 2.9: no colour codes - the colour is found from the name automatically -->
-          <Border x:Name="Swatch" Width="30" Height="30" CornerRadius="15" BorderBrush="#BBBBBB" BorderThickness="1" Background="Gray"/>
-          <TextBlock x:Name="FoundText" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="12" FontWeight="SemiBold"
+          <Border x:Name="Swatch" Width="30" Height="30" CornerRadius="15" BorderBrush="#BBBBBB" BorderThickness="1" Background="Gray" Visibility="Collapsed"/>
+          <TextBlock x:Name="FoundText" Visibility="Collapsed" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="12" FontWeight="SemiBold"
                      Text="Type a colour name - the colour is found automatically"/>
           <TextBox x:Name="HexBox" Style="{StaticResource InputBox}" Width="96" TextChanged="OnHexChanged" Visibility="Collapsed"/>
         </StackPanel>
