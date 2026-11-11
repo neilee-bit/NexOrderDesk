@@ -139,16 +139,40 @@ jobs:
           if ($p.ExitCode -ne 0) { Write-Host "::error title=Self-test failed (exit $($p.ExitCode))::$body"; exit 1 }
           Write-Host "::notice title=Self-test passed::$body"
 
-      - name: Layout pictures from the self-test
+      - name: Layout picture TShirtOrder
         if: always()
         shell: pwsh
         run: |
-          $dir = Join-Path $env:TEMP 'NexOrderDesk_shots'
-          if (Test-Path $dir) {
-            Get-ChildItem $dir -Filter *.jpg | Select-Object -First 9 | ForEach-Object {
-              $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($_.FullName))
-              if ($b64.Length -lt 60000) { Write-Host "::notice title=shot $($_.BaseName)::$b64" } else { Write-Host "$($_.Name) too big for a note ($($b64.Length))" }
-            }
+          $f = Join-Path $env:TEMP 'NexOrderDesk_shots\TShirtOrder.jpg'
+          if (Test-Path $f) {
+            $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($f))
+            $n = [Math]::Ceiling($b64.Length / 4000)
+            if ($n -le 10) { for ($i = 0; $i -lt $n; $i++) { Write-Host "::notice title=shot TShirtOrder $($i+1)/$n::$($b64.Substring($i * 4000, [Math]::Min(4000, $b64.Length - $i * 4000)))" } }
+            else { Write-Host "picture too big ($($b64.Length))" }
+          }
+
+      - name: Layout picture JacketOrder
+        if: always()
+        shell: pwsh
+        run: |
+          $f = Join-Path $env:TEMP 'NexOrderDesk_shots\JacketOrder.jpg'
+          if (Test-Path $f) {
+            $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($f))
+            $n = [Math]::Ceiling($b64.Length / 4000)
+            if ($n -le 10) { for ($i = 0; $i -lt $n; $i++) { Write-Host "::notice title=shot JacketOrder $($i+1)/$n::$($b64.Substring($i * 4000, [Math]::Min(4000, $b64.Length - $i * 4000)))" } }
+            else { Write-Host "picture too big ($($b64.Length))" }
+          }
+
+      - name: Layout picture BottomsOrder
+        if: always()
+        shell: pwsh
+        run: |
+          $f = Join-Path $env:TEMP 'NexOrderDesk_shots\BottomsOrder.jpg'
+          if (Test-Path $f) {
+            $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($f))
+            $n = [Math]::Ceiling($b64.Length / 4000)
+            if ($n -le 10) { for ($i = 0; $i -lt $n; $i++) { Write-Host "::notice title=shot BottomsOrder $($i+1)/$n::$($b64.Substring($i * 4000, [Math]::Min(4000, $b64.Length - $i * 4000)))" } }
+            else { Write-Host "picture too big ($($b64.Length))" }
           }
 
       - name: Install again with the MSI (upgrade path)

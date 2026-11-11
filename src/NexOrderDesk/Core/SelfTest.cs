@@ -472,14 +472,14 @@ public static class SelfTest
             var r1 = print.TransformToAncestor(root).TransformBounds(new Rect(print.RenderSize));
             var r = top == null ? r1 : Rect.Union(r1, top.TransformToAncestor(root).TransformBounds(new Rect(top.RenderSize)));
             r.Inflate(4, 4);
-            double k = 1.6;
+            double k = 1.25;
             var bmp = new RenderTargetBitmap((int)(root.ActualWidth * k), (int)(root.ActualHeight * k), 96 * k, 96 * k, PixelFormats.Pbgra32);
             var bg = new DrawingVisual();
             using (var dc = bg.RenderOpen()) dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
             bmp.Render(bg); bmp.Render(root);
             var crop = new CroppedBitmap(bmp, new Int32Rect((int)Math.Max(0, r.X * k), (int)Math.Max(0, r.Y * k),
                 (int)Math.Min(r.Width * k, bmp.PixelWidth - Math.Max(0, r.X * k)), (int)Math.Min(r.Height * k, bmp.PixelHeight - Math.Max(0, r.Y * k))));
-            var enc = new JpegBitmapEncoder { QualityLevel = 72 };
+            var enc = new JpegBitmapEncoder { QualityLevel = 60 };
             enc.Frames.Add(BitmapFrame.Create(crop));
             var dir = Path.Combine(Path.GetTempPath(), "NexOrderDesk_shots");
             Directory.CreateDirectory(dir);
