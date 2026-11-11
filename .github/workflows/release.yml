@@ -24,6 +24,14 @@ on:
       tag:
         description: 'Version to release, e.g. v2.7.1 (if the tag does not exist yet it is created on the chosen branch)'
         required: true
+      msi_only:
+        description: 'Only the .msi installers (no one-click setup .exe, no install.ps1)'
+        type: boolean
+        default: false
+      publish:
+        description: 'Publish immediately instead of leaving a draft'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -38,7 +46,8 @@ jobs:
     env:
       TAG: ${{ github.event.inputs.tag || github.ref_name }}
       RELEASES_REPO: ${{ vars.RELEASES_REPO }}
-      AUTO_PUBLISH: ${{ vars.AUTO_PUBLISH }}
+      AUTO_PUBLISH: ${{ github.event.inputs.publish == 'true' && 'true' || vars.AUTO_PUBLISH }}
+      MSI_ONLY: ${{ github.event.inputs.msi_only }}
     steps:
       - name: Check out the code
         uses: actions/checkout@v5
@@ -86,7 +95,9 @@ jobs:
           SIGN_PFX_BASE64: ${{ secrets.SIGN_PFX_BASE64 }}
           SIGN_PFX_PASSWORD: ${{ secrets.SIGN_PFX_PASSWORD }}
           SIGN_COMMAND: ${{ secrets.SIGN_COMMAND }}
-        run: ./tools/build-release.ps1 -Version $env:VERSION -Repository $env:TARGET_REPO
+        run: |
+          if ($env:MSI_ONLY -eq 'true') { ./tools/build-release.ps1 -Version $env:VERSION -Repository $env:TARGET_REPO -SkipSetup }
+          else { ./tools/build-release.ps1 -Version $env:VERSION -Repository $env:TARGET_REPO }
 
       - name: Verify release files
         shell: pwsh
@@ -114,7 +125,10 @@ jobs:
           GH_TOKEN: ${{ secrets.RELEASES_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           $files = @(Get-ChildItem release -File | Where-Object { $_.Name -ne 'RELEASE_NOTES.md' } | ForEach-Object { $_.FullName })
-          $draft = if ($env:AUTO_PUBLISH -eq 'true') { @() } else { @('--draft') }
+          # .msi only: the installers plus update.json (the installed apps need it to find the update)
+          if ($env:MSI_ONLY -eq 'true') { $files = @($files | Where-Object { $_ -like '*.msi' -or (Split-Path $_ -Leaf) -eq 'update.json' }) }
+          # @( ) keeps this an array: a bare string would be splatted one character at a time (gh: no matches found for `-`)
+          $draft = @(if ($env:AUTO_PUBLISH -ne 'true') { '--draft' })
           gh release view $env:TAG --repo $env:TARGET_REPO *> $null
           if ($LASTEXITCODE -eq 0) {
             Write-Host "Release $env:TAG exists - replacing its files"
