@@ -6,7 +6,8 @@
       <ItemsPanelTemplate x:Key="FourCols"><UniformGrid Columns="4"/></ItemsPanelTemplate>
     </Border.Resources>
     <Grid>
-      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="4"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <!-- 2.9: the print-type buttons fill all the space below the title (bigger click areas) -->
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="4"/><RowDefinition Height="*"/></Grid.RowDefinitions>
       <Border CornerRadius="5" Background="{DynamicResource AccentBrush}">
         <Border.Style>
           <Style TargetType="Border">
@@ -40,10 +41,11 @@
             <ToggleButton Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}" ToolTip="Select up to 2 print types">
               <ToggleButton.Style>
                 <Style TargetType="ToggleButton" BasedOn="{StaticResource PillToggle}">
-                  <Setter Property="Margin" Value="0,0,4,3"/><Setter Property="FontSize" Value="9"/>
+                  <Setter Property="Margin" Value="0,0,4,3"/><Setter Property="FontSize" Value="10.5"/>
+                  <Setter Property="Height" Value="NaN"/><Setter Property="MinHeight" Value="20"/><Setter Property="VerticalAlignment" Value="Stretch"/>
                   <Style.Triggers>
                     <DataTrigger Binding="{Binding Compact, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}" Value="True">
-                      <Setter Property="FontSize" Value="7.5"/><Setter Property="Height" Value="15"/><Setter Property="Margin" Value="0,0,3,2"/>
+                      <Setter Property="FontSize" Value="8.5"/><Setter Property="MinHeight" Value="18"/><Setter Property="Margin" Value="0,0,3,2"/>
                     </DataTrigger>
                   </Style.Triggers>
                 </Style>

@@ -25,7 +25,7 @@ public static class ColorNames
         ("Powder Blue","#B0E0E6"),("Ice Blue","#D6ECF7"),("Cobalt Blue","#0047AB"),("Cobalt","#0047AB"),("Electric Blue","#1F7BFF"),
         ("Denim","#3B5E8C"),("Denim Blue","#3B5E8C"),("Indigo","#3F3C8F"),("Petrol Blue","#1E5E6E"),("Petrol","#1E5E6E"),
         ("Peacock Blue","#0D6C85"),("Teal","#008080"),("Teal Blue","#167C8C"),("Turquoise","#30C6C6"),("Aqua","#3FD5D5"),
-        ("Cyan","#00B7EB"),("Air Force Blue","#5D8AA8"),("Steel Blue","#4682B4"),("Ocean Blue","#1F6FA3"),("Sapphire","#0F52BA"),
+        ("Cyan","#00B7EB"),("Damro","#45B3C6"),("Air Force Blue","#5D8AA8"),("Steel Blue","#4682B4"),("Ocean Blue","#1F6FA3"),("Sapphire","#0F52BA"),
         ("Azure","#2F8FEA"),("Cerulean","#2A7AB0"),("Prussian Blue","#003153"),("Oxford Blue","#14213D"),("Space Blue","#1D2951"),
         ("Red","#D62828"),("Bright Red","#EE1C25"),("Dark Red","#8E1B1B"),("Scarlet","#E0282E"),("Crimson","#C0182F"),
         ("Cherry Red","#C1121F"),("Cherry","#B11226"),("Blood Red","#8A0303"),("Brick Red","#A23B2B"),("Rust","#B7410E"),
@@ -100,8 +100,12 @@ public static class ColorNames
                  .Where(w => w.Length > 0).ToList();
     }
 
-    /// <summary>All library names (for suggestions).</summary>
-    public static IEnumerable<string> AllNames => Library.Select(l => l.Name).Distinct(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Longest name offered in suggestions and the palette (2.9: short names only; longer ones still work when typed).</summary>
+    public const int MaxShownLength = 13;
+
+    /// <summary>Library names offered in suggestions and the colour palette (short ones only).</summary>
+    public static IEnumerable<string> AllNames => Library.Select(l => l.Name).Where(n => n.Length <= MaxShownLength)
+                                                         .Distinct(StringComparer.OrdinalIgnoreCase);
 
     public static string? HexOf(string name) => ByKey.TryGetValue(Key(name), out var v) ? v.Hex : null;
 

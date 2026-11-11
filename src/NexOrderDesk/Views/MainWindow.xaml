@@ -6,7 +6,8 @@
     <!-- Each open order tab renders as an A5-landscape sheet: 840 x 592 design canvas (1 unit = 0.25 mm), scaled uniformly.
          A back side set to A4 portrait is 840 x 1188 (same scale). -->
     <DataTemplate DataType="{x:Type vm:OrderViewModel}">
-      <Viewbox Stretch="Uniform" Margin="16">
+      <!-- 2.9: thinner margin around the sheet = bigger sheet on screen -->
+      <Viewbox Stretch="Uniform" Margin="8,6,8,6">
         <Border Width="840" Height="{Binding SheetHeight}" CornerRadius="4" Background="{DynamicResource SheetBrush}" Effect="{StaticResource SoftShadow}">
           <s:OrderSheetView/>
         </Border>
@@ -15,7 +16,7 @@
   </Window.Resources>
   <Grid>
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-    <Border Background="#1A1A1A" Padding="10,8,10,0">
+    <Border Background="#1A1A1A" Padding="10,5,10,0">
       <DockPanel>
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,6">
           <!-- shown when the start-up check finds a newer version -->

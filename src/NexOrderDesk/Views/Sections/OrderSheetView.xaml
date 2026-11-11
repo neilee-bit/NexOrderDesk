@@ -2,7 +2,8 @@
              h:OutputMode.IsActive="{Binding IsEditable, Converter={StaticResource InvBool}}">
   <Grid>
     <Grid.RowDefinitions>
-      <RowDefinition Height="*"/><RowDefinition Height="6"/><RowDefinition Height="32"/><RowDefinition Height="6"/>
+      <!-- 2.9: small button row; on the printed sheet / PDF it is removed completely so the order gets the space -->
+      <RowDefinition Height="*"/><RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
 
     <!-- FRONT side -->
@@ -19,7 +20,7 @@
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="190*"/><RowDefinition Height="6"/><RowDefinition Height="Auto" MinHeight="28"/><RowDefinition Height="6"/>
-            <RowDefinition Height="126*"/><RowDefinition Height="6"/><RowDefinition Height="62*"/>
+            <RowDefinition Height="120*"/><RowDefinition Height="6"/><RowDefinition Height="74*"/>
           </Grid.RowDefinitions>
           <Grid>
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
@@ -43,7 +44,7 @@
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="160*"/><RowDefinition Height="6"/><RowDefinition Height="Auto" MinHeight="28"/><RowDefinition Height="6"/>
-            <RowDefinition Height="200*"/><RowDefinition Height="6"/><RowDefinition Height="Auto"/>
+            <RowDefinition Height="200*"/><RowDefinition Height="6"/><RowDefinition Height="50*" MinHeight="44"/>
           </Grid.RowDefinitions>
           <Grid>
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
@@ -67,7 +68,7 @@
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="175*"/><RowDefinition Height="6"/><RowDefinition Height="Auto" MinHeight="34"/><RowDefinition Height="6"/>
-            <RowDefinition Height="150*"/><RowDefinition Height="6"/><RowDefinition Height="Auto"/>
+            <RowDefinition Height="150*"/><RowDefinition Height="6"/><RowDefinition Height="50*" MinHeight="44"/>
           </Grid.RowDefinitions>
           <Grid>
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
@@ -123,10 +124,10 @@
       </StackPanel>
     </Border>
 
-    <s:ActionBar Grid.Row="2">
+    <s:ActionBar Grid.Row="1" Margin="0,4,0,3">
       <s:ActionBar.Style>
         <Style TargetType="s:ActionBar">
-          <Style.Triggers><Trigger Property="h:OutputMode.IsPrint" Value="True"><Setter Property="Visibility" Value="Hidden"/></Trigger></Style.Triggers>
+          <Style.Triggers><Trigger Property="h:OutputMode.IsPrint" Value="True"><Setter Property="Visibility" Value="Collapsed"/></Trigger></Style.Triggers>
         </Style>
       </s:ActionBar.Style>
     </s:ActionBar>

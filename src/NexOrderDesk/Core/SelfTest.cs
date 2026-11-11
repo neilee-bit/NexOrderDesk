@@ -44,6 +44,7 @@ public static class SelfTest
             Step("theme contrast"); ThemeContrast(s);
             Step("bold selections"); BoldSelections(s);
             Step("images and long names"); ImagesAndNames(s);
+            Step("layout space"); LayoutSpace(s);
             Step("material colours"); Colours(s);
             Step("print and press"); PrintPress(s);
             Step("customers"); Customers(s);
@@ -163,9 +164,10 @@ public static class SelfTest
         Check("bottoms: the same size table as other sheets", FindAll<SizeTablePanel>(live).Any(IsShown), "");
         Check("bottoms: only the Adults column until Kids / PS are switched on",
               o.SizeColumnsView.Cast<SizeColumn>().Select(c => c.Header).SequenceEqual(new[] { "Adults" }), string.Join(", ", o.SizeColumns.Select(c => c.Header)));
-        o.IncludeBottomPs = true; o.IncludeKids = true; o.IncludeExtraSizes = true;
+        Check("bottoms: no '+ Other sizes' button", !FindAll<System.Windows.Controls.Primitives.ToggleButton>(live).Any(t => IsShown(t) && Equals(t.Content, o.ExtraSizesText)), o.ExtraSizesText);
+        o.IncludeBottomPs = true; o.IncludeKids = true;
         var heads = o.SizeColumnsView.Cast<SizeColumn>().Select(c => c.Header).ToList();
-        Check("bottoms: + Kids, + PS and + Other sizes add columns in order", heads.SequenceEqual(new[] { "Adults", "Kids", "PS", "Optional sizes" }), string.Join(", ", heads));
+        Check("bottoms: + Kids and + PS add columns in order", heads.SequenceEqual(new[] { "Adults", "Kids", "PS" }), string.Join(", ", heads));
         o.BottomAdultColumn.Category = "Gents";
         o.BottomAdultColumn.Sleeve = "L/S";                   // no sleeve on bottoms
         Check("bottoms: adult category without sleeve", o.BottomAdultColumn.Header == "Gents", o.BottomAdultColumn.Header);
@@ -263,6 +265,29 @@ public static class SelfTest
         n.Detach();
     }
 
+    private static void LayoutSpace(SettingsService s)
+    {
+        var o = NewOrder(s, SheetLayout.Tops);
+        o.MaterialColors[0].Note = "FRONT & BACK";
+        o.AddMaterialCommand.Execute(null);
+        Check("material: added rows say Material (not Extra)", o.MaterialColors.Count == 2 && o.MaterialColors.All(m => m.PillTitle == "Material"), "");
+        var live = Host(o);
+        var liveSizes = FindAll<SizeTablePanel>(live).First(IsShown).ActualHeight;
+        var liveTexts = Texts(live);
+        Check("material: note box between material and colour", liveTexts.Contains("FRONT & BACK") && liveTexts.Contains("e.g. front & back"), "");
+        var pills = FindAll<System.Windows.Controls.Primitives.ToggleButton>(FindAll<PrintMethodPanel>(live).First(IsShown)).Where(IsShown).ToList();
+        Check("print method: bigger buttons", pills.Count >= 3 && pills.All(p => p.ActualHeight >= 20), string.Join(", ", pills.Select(p => p.ActualHeight.ToString("0"))));
+        var bar = FindAll<ActionBar>(live).First();
+        Check("action bar: small buttons", bar.ActualHeight <= 26 && FindAll<Button>(bar).Where(IsShown).All(b => b.ActualHeight <= 24), bar.ActualHeight.ToString("0"));
+        o.SubmitCommand.Execute(null); Pump(); Pump();
+        var printed = Render(o);
+        var printSizes = FindAll<SizeTablePanel>(printed).First(IsShown).ActualHeight;
+        var pt = Texts(printed);
+        Check("print: the button row is removed so the order uses the space", printSizes > liveSizes + 10, $"size table {liveSizes:0} on screen, {printSizes:0} printed");
+        Check("material: note printed, empty note and hint left off", pt.Contains("FRONT & BACK") && !pt.Contains("e.g. front & back"), "");
+        Close(live, o);
+    }
+
     private static void Colours(SettingsService s)
     {
         var o = NewOrder(s, SheetLayout.Tops);
@@ -282,6 +307,11 @@ public static class SelfTest
         var printed = Texts(Render(o));
         Check("colour: printed on the sheet", printed.Contains("BOTTLE GREEN"), "");
         o.Detach();
+
+        Check("colour: DAMRO (teal light blue) can be typed and picked", ColorNames.Find("damro")?.Hex == "#45B3C6" &&
+              ColorBox.Suggest("dam").Any(x => x.Name == "DAMRO") && ColorFamilies.InFamily("Teals & Turquoise").Any(x => x.Name == "DAMRO"), "");
+        Check("colour: no long names in the palette and suggestions", ColorFamilies.Library.All(x => x.Name.Length <= 13) && ColorBox.Suggest("").All(x => x.Name.Length <= 13 || s.Colors.Any(c => c.Name == x.Name)),
+              string.Join(", ", ColorFamilies.Library.Where(x => x.Name.Length > 13).Select(x => x.Name)));
 
         // advanced colour picker
         Check("picker: every built-in colour is in a family", ColorFamilies.Library.All(sw => ColorFamilies.Names.Contains(ColorFamilies.FamilyOf(sw.Hex))) &&

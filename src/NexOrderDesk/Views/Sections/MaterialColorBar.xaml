@@ -28,6 +28,7 @@
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="1"/>
+              <ColumnDefinition Width="Auto"/><ColumnDefinition Width="1"/>
               <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <Border Background="{DynamicResource AccentBrush}" CornerRadius="14,16,16,14" Padding="9,0,12,0">
@@ -44,9 +45,46 @@
                       ItemsSource="{Binding DataContext.MaterialOptions, RelativeSource={RelativeSource AncestorType=s:MaterialColorBar}}"
                       SelectedItem="{Binding Material}"/>
             <Rectangle Grid.Column="2" Fill="{StaticResource LineBrush}" Margin="0,5"/>
-            <!-- colour: swatch + name, at the right end -->
-            <!-- colour: type a name, the swatch is found automatically (2.9) -->
-            <s:ColorBox Grid.Column="3" Margin="4,2,2,2" VerticalAlignment="Center">
+            <!-- 2.9: free words between material and colour, e.g. FRONT & BACK (hidden on the submitted sheet when empty) -->
+            <Grid Grid.Column="3" Margin="4,0" VerticalAlignment="Center">
+              <Grid.Style>
+                <Style TargetType="Grid">
+                  <Setter Property="Width" Value="92"/>
+                  <Style.Triggers>
+                    <MultiDataTrigger>
+                      <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding HasNote}" Value="False"/>
+                        <Condition Binding="{Binding Path=(h:OutputMode.IsActive), RelativeSource={RelativeSource Self}}" Value="True"/>
+                      </MultiDataTrigger.Conditions>
+                      <Setter Property="Visibility" Value="Collapsed"/>
+                    </MultiDataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Grid.Style>
+              <Border CornerRadius="9" Background="#F3F4F6" Margin="0,3"/>
+              <TextBox Style="{StaticResource ValueBox}" FontSize="11" FontWeight="Bold" CharacterCasing="Upper" TextAlignment="Center"
+                       h:FitText.Enabled="True" h:FitText.MinSize="6" Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
+                       ToolTip="Optional words for this material, e.g. FRONT &amp; BACK, SLEEVES, COLLAR"/>
+              <TextBlock Text="e.g. front &amp; back" FontSize="9.5" FontStyle="Italic" Foreground="#A0A4AE" IsHitTestVisible="False"
+                         HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                      <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                          <Condition Binding="{Binding HasNote}" Value="False"/>
+                          <Condition Binding="{Binding Path=(h:OutputMode.IsActive), RelativeSource={RelativeSource Self}}" Value="False"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Visibility" Value="Visible"/>
+                      </MultiDataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </Grid>
+            <!-- colour: type a name, the swatch is found automatically; click the swatch for the colour picker -->
+            <s:ColorBox Grid.Column="5" Margin="4,2,2,2" VerticalAlignment="Center">
               <s:ColorBox.Style>
                 <Style TargetType="s:ColorBox">
                   <Setter Property="MaxWidth" Value="130"/><Setter Property="MinWidth" Value="80"/>
@@ -58,7 +96,7 @@
                 </Style>
               </s:ColorBox.Style>
             </s:ColorBox>
-            <Grid Grid.Column="4">
+            <Grid Grid.Column="6">
               <Grid.Style>
                 <Style TargetType="Grid">
                   <Setter Property="Width" Value="24"/>

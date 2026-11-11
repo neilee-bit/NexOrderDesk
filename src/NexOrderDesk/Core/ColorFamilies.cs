@@ -78,7 +78,9 @@ public static class ColorFamilies
         for (int i = 0; i < steps.Length; i++)
         {
             var col = i < 3 ? ColorMath.Lighten(c, steps[i].Amount) : i == 3 ? c : ColorMath.Darken(c, steps[i].Amount);
-            list.Add(new Swatch(steps[i].Prefix + name, ColorMath.ToHex(col)));
+            var full = steps[i].Prefix + name;
+            if (full.Length > 14) full = full.Replace("LIGHT ", "LT ").Replace("DARK ", "DK ");   // keep shade names short
+            list.Add(new Swatch(full, ColorMath.ToHex(col)));
         }
         return list;
     }

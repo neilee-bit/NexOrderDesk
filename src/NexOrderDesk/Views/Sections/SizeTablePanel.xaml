@@ -140,7 +140,8 @@
                           IsChecked="{Binding IncludeBottomPs, Mode=TwoWay}" ToolTip="Add the pre-school column (P4XS to PXL)"
                           Visibility="{Binding IsBottoms, Converter={StaticResource BoolToVis}}"/>
             <ToggleButton Style="{StaticResource PillToggle}" Content="{Binding ExtraSizesText}" Width="72" Height="16" FontSize="8.5"
-                          IsChecked="{Binding IncludeExtraSizes, Mode=TwoWay}" ToolTip="{Binding ExtraSizesTip}"/>
+                          IsChecked="{Binding IncludeExtraSizes, Mode=TwoWay}" ToolTip="{Binding ExtraSizesTip}"
+                          Visibility="{Binding IsBottoms, Converter={StaticResource InvBoolToVis}}"/>
           </StackPanel>
         </Grid>
       </Border>

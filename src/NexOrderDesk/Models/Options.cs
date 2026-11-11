@@ -49,7 +49,13 @@ public class MaterialColorEntry : ObservableObject
         ColorName = color?.Name ?? "WHITE";
     }
     public bool IsPrimary { get; }
-    public string PillTitle => IsPrimary ? "Material" : "Extra";
+    /// <summary>Every row is labelled "Material" (2.9 - extra rows no longer say "Extra").</summary>
+    public string PillTitle => "Material";
+
+    private string _note = "";
+    /// <summary>Free words between the material and the colour, e.g. "FRONT &amp; BACK" (2.9).</summary>
+    public string Note { get => _note; set { if (value != null && Set(ref _note, value)) OnPropertyChanged(nameof(HasNote)); } }
+    public bool HasNote => _note.Trim().Length > 0;
     public string Material { get => _material; set { if (value != null) Set(ref _material, value); } }
 
     /// <summary>Picking a saved colour fills the colour name.</summary>
