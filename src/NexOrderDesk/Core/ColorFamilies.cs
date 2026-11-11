@@ -42,7 +42,7 @@ public static class ColorFamilies
     /// <summary>All built-in colours (one per name), ordered light to dark inside each family.</summary>
     public static IReadOnlyList<Swatch> Library => _library ??= ColorNames.AllNames
         .Select(n => new Swatch(n.ToUpperInvariant(), ColorNames.HexOf(n)!))
-        .GroupBy(sw => sw.Hex).Select(g => g.First())            // same colour under two names: show once
+        .GroupBy(sw => sw.Hex).Select(g => g.OrderByDescending(x => x.Name.Length).First())   // same colour under two names: once, fuller name (NAVY BLUE)
         .OrderByDescending(sw => Hsl(ColorMath.Parse(sw.Hex)).L).ToList();
 
     public static IEnumerable<Swatch> InFamily(string family) => Library.Where(sw => FamilyOf(sw.Hex) == family);
