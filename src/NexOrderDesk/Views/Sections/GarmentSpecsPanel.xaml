@@ -112,11 +112,23 @@
                Visibility="{Binding ShowCollarLabel, Converter={StaticResource BoolToVis}}"/>
     </Grid>
 
-    <!-- Print and Press (2.9): only Collar Patch, Placket and Piping. Collar Patch and Placket appear on the submitted
+    <!-- Print and Press and Cut and Print (2.9 / 2.9.1): only Collar Patch, Placket and Piping. Collar Patch and Placket appear on the submitted
          sheet only when ticked (the rows that are left share the space). -->
+    <!-- 2.9.1 (also Cut and Print): on the submitted sheet the rows keep the normal row height and sit at the top,
+         so one or two rows never stretch into big boxes. -->
     <UniformGrid Columns="1" Visibility="{Binding IsPrintPress, Converter={StaticResource BoolToVis}}">
+      <UniformGrid.Style>
+        <Style TargetType="UniformGrid">
+          <Style.Triggers><Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="VerticalAlignment" Value="Top"/></Trigger></Style.Triggers>
+        </Style>
+      </UniformGrid.Style>
+      <UniformGrid.Resources>
+        <Style x:Key="PressRow" TargetType="Grid">
+          <Style.Triggers><Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Height" Value="28"/><Setter Property="Margin" Value="0,1"/></Trigger></Style.Triggers>
+        </Style>
+      </UniformGrid.Resources>
       <Grid x:Name="CollarPatchRow">
-        <Grid.Style><Style TargetType="Grid"><Style.Triggers>
+        <Grid.Style><Style TargetType="Grid" BasedOn="{StaticResource PressRow}"><Style.Triggers>
           <MultiDataTrigger>
             <MultiDataTrigger.Conditions>
               <Condition Binding="{Binding HasCollarPatch}" Value="False"/>
@@ -144,7 +156,7 @@
       </Grid>
 
       <Grid x:Name="PlacketRow">
-        <Grid.Style><Style TargetType="Grid"><Style.Triggers>
+        <Grid.Style><Style TargetType="Grid" BasedOn="{StaticResource PressRow}"><Style.Triggers>
           <MultiDataTrigger>
             <MultiDataTrigger.Conditions>
               <Condition Binding="{Binding HasPlacket}" Value="False"/>
@@ -171,7 +183,7 @@
         </Grid>
       </Grid>
 
-      <Grid x:Name="PressPipingRow">
+      <Grid x:Name="PressPipingRow" Style="{StaticResource PressRow}">
         <Grid.ColumnDefinitions><ColumnDefinition Width="0.43*"/><ColumnDefinition Width="0.57*"/></Grid.ColumnDefinitions>
         <Label Style="{StaticResource SpecLabel}">
           <DockPanel>

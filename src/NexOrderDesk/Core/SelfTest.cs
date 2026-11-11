@@ -577,6 +577,9 @@ public static class SelfTest
         o.SubmitCommand.Execute(null); Pump(); Pump();
         var printed = Texts(Render(o));
         Check($"{id}: unticked Collar Patch not on the submitted sheet", !printed.Contains("Collar Patch & Color:"), "");
+        var rows = FindAll<Grid>(Render(o)).Where(g => g.Name is "PressPipingRow" or "PlacketRow" && IsShown(g)).ToList();
+        Check($"{id}: submitted spec rows keep the normal row height", rows.Count == 2 && rows.All(r => r.ActualHeight <= 32),
+              string.Join(", ", rows.Select(r => $"{r.Name} {r.ActualHeight:0}px")));
         Check($"{id}: ticked Placket with its colour on the sheet", printed.Contains("Placket & Color:") && printed.Contains("NAVY"), string.Join(" | ", printed.Take(40)));
         o.EditCommand.Execute(null); o.HasCollarPatch = true; o.CollarPatchColor = "RED"; o.SubmitCommand.Execute(null); Pump(); Pump();
         printed = Texts(Render(o));
