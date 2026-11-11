@@ -189,6 +189,20 @@ namespace NexOrderDeskSetup
             return false;
         }
 
+        /// <summary>Version of the installed NEX ORDER DESK, or null when it is not installed.</summary>
+        public static Version InstalledVersion()
+        {
+            try
+            {
+                var exe = InstalledExe();
+                if (exe == null) return null;
+                var v = FileVersionInfo.GetVersionInfo(exe).ProductVersion ?? "";
+                int plus = v.IndexOf('+'); if (plus >= 0) v = v.Substring(0, plus);
+                return Version.TryParse(v, out var r) ? new Version(r.Major, r.Minor, Math.Max(0, r.Build)) : null;
+            }
+            catch { return null; }
+        }
+
         /// <summary>Where the installed NexOrderDesk.exe is (the MSI records the folder it used).</summary>
         public static string InstalledExe()
         {

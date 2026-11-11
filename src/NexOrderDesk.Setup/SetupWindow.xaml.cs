@@ -69,6 +69,10 @@ namespace NexOrderDeskSetup
             {
                 Working("Connecting...", "");
                 var m = await Online.GetManifestAsync(ct);
+                // a newer version is already on this PC: nothing to do (Windows would refuse to go back to an older one)
+                var installed = MsiRunner.InstalledVersion();
+                if (installed != null && System.Version.TryParse(m.Version, out var latest) && installed > latest)
+                    throw new SetupException($"NEX ORDER DESK {installed.ToString(3)} is already installed - it is newer than {m.Version}, the latest published version. Nothing needs to be installed.");
                 // small installer when the .NET 8 Desktop Runtime is already on this PC, otherwise the complete one
                 var file = m.Pick(MsiRunner.HasDesktopRuntime8() ? "light" : "full");
                 Working("Downloading NEX ORDER DESK " + m.Version + "...", "");
