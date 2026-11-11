@@ -47,6 +47,7 @@ public static class SelfTest
             Step("layout space"); LayoutSpace(s);
             Step("print grid"); PrintGrid(s);
             Step("bottoms layout"); BottomsLayout(s);
+            Step("print method after submit"); PrintMethodSubmitted(s);
             Step("material colours"); Colours(s);
             Step("print and press"); PrintPress(s);
             Step("customers"); Customers(s);
@@ -342,6 +343,22 @@ public static class SelfTest
         Check("print: the button row is removed so the order uses the space", printSizes > liveSizes + 10, $"size table {liveSizes:0} on screen, {printSizes:0} printed");
         Check("material: note printed, empty note and hint left off", pt.Contains("FRONT & BACK") && !pt.Contains("e.g. front & back"), "");
         Close(live, o);
+    }
+
+    private static void PrintMethodSubmitted(SettingsService s)
+    {
+        foreach (var layout in new[] { SheetLayout.Tops, SheetLayout.Jacket, SheetLayout.Bottoms })
+        {
+            var o = NewOrder(s, layout);
+            o.SubmitCommand.Execute(null); Pump(); Pump();
+            var printed = Render(o);
+            var panel = FindAll<PrintMethodPanel>(printed).FirstOrDefault(IsShown);
+            if (panel == null) { Fail($"{layout}: print-method box not found"); o.Detach(); continue; }
+            var pills = FindAll<System.Windows.Controls.Primitives.ToggleButton>(panel).Where(IsShown).ToList();
+            var title = FindAll<TextBlock>(panel).FirstOrDefault(t => IsShown(t) && t.Text == o.PrintSummary);
+            Check($"{layout}: submitted print method only in the title row", pills.Count == 0 && title != null, $"{pills.Count} small buttons");
+            o.Detach();
+        }
     }
 
     private static void Colours(SettingsService s)

@@ -22,11 +22,26 @@
         <Border.Style>
           <Style TargetType="Border">
             <Setter Property="Height" Value="24"/>
-            <Style.Triggers><DataTrigger Binding="{Binding Compact, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}" Value="True"><Setter Property="Height" Value="17"/></DataTrigger></Style.Triggers>
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding Compact, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}" Value="True"><Setter Property="Height" Value="17"/></DataTrigger>
+              <!-- 2.9.1: submitted sheet / print / PDF - only this title row, filling the whole box -->
+              <Trigger Property="h:OutputMode.IsActive" Value="True">
+                <Setter Property="Height" Value="NaN"/><Setter Property="Grid.RowSpan" Value="3"/>
+              </Trigger>
+            </Style.Triggers>
           </Style>
         </Border.Style>
         <Grid>
-          <Viewbox StretchDirection="DownOnly" Margin="26,0">
+          <Viewbox Margin="26,0">
+            <Viewbox.Style>
+              <Style TargetType="Viewbox">
+                <Setter Property="StretchDirection" Value="DownOnly"/>
+                <Style.Triggers>
+                  <!-- submitted: the print method is shown big in the row (never bigger than 30 pt) -->
+                  <Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="StretchDirection" Value="Both"/><Setter Property="MaxHeight" Value="34"/><Setter Property="Margin" Value="12,2"/></Trigger>
+                </Style.Triggers>
+              </Style>
+            </Viewbox.Style>
             <TextBlock Text="{Binding PrintSummary}" FontSize="17" FontWeight="ExtraBold" Foreground="{DynamicResource OnAccentBrush}"/>
           </Viewbox>
           <Button Content="&#x2699;" Width="16" Height="15" HorizontalAlignment="Right" Margin="0,0,4,0" FontSize="10"
@@ -43,7 +58,11 @@
         <ItemsControl.Style>
           <Style TargetType="ItemsControl">
             <Setter Property="ItemsPanel" Value="{StaticResource ThreeCols}"/>
-            <Style.Triggers><DataTrigger Binding="{Binding Compact, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}" Value="True"><Setter Property="ItemsPanel" Value="{StaticResource FourCols}"/></DataTrigger></Style.Triggers>
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding Compact, RelativeSource={RelativeSource AncestorType=s:PrintMethodPanel}}" Value="True"><Setter Property="ItemsPanel" Value="{StaticResource FourCols}"/></DataTrigger>
+              <!-- submitted: no small buttons under the title (the choice is in the title row) -->
+              <Trigger Property="h:OutputMode.IsActive" Value="True"><Setter Property="Visibility" Value="Collapsed"/></Trigger>
+            </Style.Triggers>
           </Style>
         </ItemsControl.Style>
         <ItemsControl.Resources>
