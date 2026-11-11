@@ -245,7 +245,15 @@ public static class SelfTest
         n.OrderName = "SPORTS MEET 2026 HOUSE T-SHIRTS";
         sheet = Render(n);
         box = FindAll<TextBox>(sheet).FirstOrDefault(t => t.Text == n.OrderName);
-        Check("medium order name stays on one line", box != null && box.TextWrapping == TextWrapping.NoWrap, box?.FontSize.ToString() ?? "not found");
+        bool medFits = false;
+        if (box != null)
+        {
+            var ft = new FormattedText(box.Text, System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+                new Typeface(box.FontFamily, box.FontStyle, box.FontWeight, box.FontStretch), box.FontSize, Brushes.Black, 1);
+            if (box.TextWrapping == TextWrapping.Wrap) ft.MaxTextWidth = box.ActualWidth - 6;
+            medFits = box.FontSize >= 9 && ft.Width <= box.ActualWidth && ft.Height <= box.ActualHeight;
+        }
+        Check("medium order name fits and stays readable", medFits, box == null ? "not found" : $"font {box.FontSize}, {box.TextWrapping}");
         n.Detach();
     }
 

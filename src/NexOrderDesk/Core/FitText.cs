@@ -42,6 +42,9 @@ public static class FitText
         return Math.Max(minSize, Math.Floor(baseSize * width / need * 4) / 4);
     }
 
+    private static double Width(string text, double size, Typeface face, double dip) =>
+        string.IsNullOrEmpty(text) ? 0 : new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, face, size, Brushes.Black, dip).WidthIncludingTrailingWhitespace;
+
     public static void Fit(TextBox tb)
     {
         double b = (double)tb.GetValue(BaseSizeProperty);
@@ -54,18 +57,18 @@ public static class FitText
         double min = GetMinSize(tb);
         double size = SizeFor(tb.Text, avail, b, min, face, dip);
         var wrap = TextWrapping.NoWrap;
-        // very long text: use two lines inside the box (if it is tall enough) before going smaller
+        bool singleFits = Width(tb.Text, size, face, dip) <= avail;
+        // long text: two lines inside the box when that is bigger than one cramped line (or one line cannot fit at all)
         double boxH = tb.ActualHeight - 2;
-        if (size < b * 0.7 && boxH >= 2 * 1.25 * 8 && !string.IsNullOrEmpty(tb.Text))
+        if (!string.IsNullOrEmpty(tb.Text) && (size < b * 0.7 || !singleFits) && boxH >= 2 * 1.25 * 5.5)
         {
-            double two = Math.Min(b, Math.Min(SizeFor(tb.Text, avail * 1.8, b, 1, face, dip), boxH / (2 * 1.3)));
-            if (two > size)
+            for (double t = Math.Floor(Math.Min(b, boxH / 2.5) * 4) / 4; t >= 5.5; t -= 0.25)
             {
-                // check that the text really fits in two lines at that size; step down if not
-                for (double t = Math.Floor(two * 4) / 4; t >= min; t -= 0.25)
+                var ft = new FormattedText(tb.Text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, face, t, Brushes.Black, dip) { MaxTextWidth = avail };
+                if (ft.Height <= boxH && ft.Width <= avail)
                 {
-                    var ft = new FormattedText(tb.Text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, face, t, Brushes.Black, dip) { MaxTextWidth = avail };
-                    if (ft.Height <= boxH) { size = t; wrap = TextWrapping.Wrap; break; }
+                    if (t > size || !singleFits) { size = t; wrap = TextWrapping.Wrap; }
+                    break;
                 }
             }
         }
