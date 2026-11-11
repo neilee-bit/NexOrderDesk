@@ -83,8 +83,8 @@ public class OrderViewModel : ObservableObject
         AdultShort = new(DefaultOptions.AdultSizes.Select(s => new SizeEntry(s, "S/S")));
         AdultLong = new(DefaultOptions.AdultSizes.Select(s => new SizeEntry(s, "L/S")));
         // jackets: the Kids column is optional (like PS) - hidden until "+ Kids" is switched on
-        Kids = new(DefaultOptions.KidsSizes.Select(s => new SizeEntry(s, "S/S", Layout == SheetLayout.Jacket)));
-        Preschool = new(DefaultOptions.PreschoolSizes.Select(s => new SizeEntry(s, "S/S", true)));
+        Kids = new(DefaultOptions.KidsSizes.Select(s => new SizeEntry(s, IsBottoms ? "" : "S/S", Layout is SheetLayout.Jacket or SheetLayout.Bottoms)));
+        Preschool = new(DefaultOptions.PreschoolSizes.Select(s => new SizeEntry(s, IsBottoms ? "" : "S/S", true)));
         BottomSizes = new(DefaultOptions.BottomSizes.Select(s => new SizeEntry(s, "")));
         OptionalSizes = new(Enumerable.Range(0, DefaultOptions.OptionalRowsStart).Select(_ => new SizeEntry("", "", true, true)));
         foreach (var e in AllSizes) Watch(e);
@@ -105,6 +105,13 @@ public class OrderViewModel : ObservableObject
         BottomStrip = new ObservableCollection<SizeEntry>(BottomSizes.Concat(OptionalSizes));
         OptionalSizes.CollectionChanged += (_, a) => { if (a.NewItems != null) foreach (SizeEntry e in a.NewItems) BottomStrip.Add(e); };
         BottomStripView = MakeSizeView(BottomStrip);
+        // 2.9: Adults line (+ other sizes), then Kids and PS lines when switched on
+        BottomLines = new ObservableCollection<StripLine>
+        {
+            new("ADULTS", BottomStrip, () => IsEditable, () => true),
+            new("KIDS", Kids, () => IsEditable, () => _includeKids),
+            new("PS", Preschool, () => IsEditable, () => _includeBottomPs),
+        };
 
         // flags
         FlagSizes = new(Enumerable.Range(0, DefaultOptions.FlagRowsStart).Select(_ => NewFlagRow()));
@@ -274,6 +281,20 @@ public class OrderViewModel : ObservableObject
         set { if (Set(ref _hasPiping, value)) { OnPropertyChanged(nameof(NoPiping)); OnPropertyChanged(nameof(ShowPipingHint)); } }
     }
     public bool NoPiping => !_hasPiping;
+
+    // ---------------- Print & Press (2.9): short spec list - Collar Patch, Placket, Piping
+    /// <summary>Print and Press orders show only Collar Patch, Placket and Piping (no neck / collar / sleeve / button rows).</summary>
+    public bool IsPrintPress => IsTops && Type.Id == "printpress";
+    public bool IsStandardTops => !IsPrintPress;
+    private bool _hasCollarPatch, _hasPlacket;
+    private string _collarPatchColor = "", _placketColor = "";
+    /// <summary>Ticked = the order has a collar patch; only ticked rows appear on the submitted sheet.</summary>
+    public bool HasCollarPatch { get => _hasCollarPatch; set { if (Set(ref _hasCollarPatch, value)) OnPropertyChanged(nameof(ShowCollarPatchHint)); } }
+    public string CollarPatchColor { get => _collarPatchColor; set { if (Set(ref _collarPatchColor, value ?? "")) OnPropertyChanged(nameof(ShowCollarPatchHint)); } }
+    public bool ShowCollarPatchHint => _hasCollarPatch && _collarPatchColor.Length == 0;
+    public bool HasPlacket { get => _hasPlacket; set { if (Set(ref _hasPlacket, value)) OnPropertyChanged(nameof(ShowPlacketHint)); } }
+    public string PlacketColor { get => _placketColor; set { if (Set(ref _placketColor, value ?? "")) OnPropertyChanged(nameof(ShowPlacketHint)); } }
+    public bool ShowPlacketHint => _hasPlacket && _placketColor.Length == 0;
     /// <summary>Piping details / colour, typed freely (only used when piping is ticked).</summary>
     private string _pipingText = "";
     public string PipingText
@@ -472,11 +493,11 @@ public class OrderViewModel : ObservableObject
     public ObservableCollection<SizeColumn> SizeColumns { get; }
 
     private IEnumerable<SizeEntry> AllSizes => !IsGarment ? Enumerable.Empty<SizeEntry>() : IsBottoms
-        ? BottomSizes.Concat(OptionalSizes)
+        ? BottomSizes.Concat(OptionalSizes).Concat(Kids).Concat(Preschool)
         : AdultShort.Concat(AdultLong).Concat(Kids).Concat(Preschool);
 
     private IEnumerable<ObservableCollection<SizeEntry>> SizeLists => !IsGarment ? Array.Empty<ObservableCollection<SizeEntry>>() : IsBottoms
-        ? new[] { BottomSizes, OptionalSizes }
+        ? new[] { BottomSizes, OptionalSizes, Kids, Preschool }
         : new[] { AdultShort, AdultLong, Kids, Preschool };
 
     /// <summary>Rows each size column is divided into: full list while editing, tighter once submitted (only filled sizes show).</summary>
@@ -513,25 +534,46 @@ public class OrderViewModel : ObservableObject
             if (value && col == null)
                 SizeColumns.Add(IsBottoms ? new SizeColumn("Optional sizes", view, AddOptionalSizeCommand) : new SizeColumn("PS (S/S)", view));
             else if (!value && col != null) SizeColumns.Remove(col);
-            view.Refresh(); BottomStripView.Refresh();
+            view.Refresh(); BottomStripView.Refresh(); RefreshBottomLines();
             OnPropertyChanged(nameof(TotalQuantity)); OnPropertyChanged(nameof(SizeRowCount));
         }
     }
     public string ExtraSizesText => IsBottoms ? "+ Other sizes" : "+ PS sizes";
 
     private bool _includeKids;
-    /// <summary>Jackets only: "+ Kids" adds the Kids (S/S) column.</summary>
+    private bool _includeBottomPs;
+    /// <summary>Bottoms / shorts: "+ PS" adds the pre-school sizes line (P4XS to PXL).</summary>
+    public bool IncludeBottomPs
+    {
+        get => _includeBottomPs;
+        set
+        {
+            if (!IsBottoms || !Set(ref _includeBottomPs, value)) return;
+            foreach (var e in Preschool) { e.IsActive = value; if (!value) e.Quantity = null; }
+            PreschoolView.Refresh(); RefreshBottomLines();
+            OnPropertyChanged(nameof(TotalQuantity)); OnPropertyChanged(nameof(SizeRowCount));
+        }
+    }
+
+    /// <summary>Bottoms / shorts size lines: Adults (+ other sizes), Kids, PS.</summary>
+    public ObservableCollection<StripLine> BottomLines { get; }
+    private void RefreshBottomLines() { foreach (var l in BottomLines) l.Refresh(); }
+
+    /// <summary>Jackets: "+ Kids" adds the Kids (S/S) column. Bottoms: "+ Kids" adds the Kids sizes line.</summary>
     public bool IncludeKids
     {
         get => _includeKids;
         set
         {
-            if (!IsJacket || !Set(ref _includeKids, value)) return;
+            if (!(IsJacket || IsBottoms) || !Set(ref _includeKids, value)) return;
             foreach (var e in Kids) { e.IsActive = value; if (!value) e.Quantity = null; }
-            var col = SizeColumns.FirstOrDefault(c => c.View == KidsView);
-            if (value && col == null) SizeColumns.Insert(Math.Min(2, SizeColumns.Count), new SizeColumn("Kids (S/S)", KidsView));
-            else if (!value && col != null) SizeColumns.Remove(col);
-            KidsView.Refresh();
+            if (IsJacket)
+            {
+                var col = SizeColumns.FirstOrDefault(c => c.View == KidsView);
+                if (value && col == null) SizeColumns.Insert(Math.Min(2, SizeColumns.Count), new SizeColumn("Kids (S/S)", KidsView));
+                else if (!value && col != null) SizeColumns.Remove(col);
+            }
+            KidsView.Refresh(); RefreshBottomLines();
             OnPropertyChanged(nameof(TotalQuantity)); OnPropertyChanged(nameof(SizeRowCount));
         }
     }
@@ -544,15 +586,7 @@ public class OrderViewModel : ObservableObject
     /// <summary>Bottoms size strip (XS..4XL then the optional sizes), shown left-to-right with the total beside it.</summary>
     public ObservableCollection<SizeEntry> BottomStrip { get; }
     public ICollectionView BottomStripView { get; }
-    /// <summary>
-    /// Submitted bottoms sheet: the filled sizes keep a normal cell width and sit right next to the total
-    /// (instead of a few very wide cells far away from it). While editing the strip uses the full width.
-    /// </summary>
-    public bool BottomStripCompact => !IsEditable && FilledBottomSizes * BottomCellWidth <= 300;
-    /// <summary>Width of the size cells on a compact submitted strip (NaN = automatic: full width).</summary>
-    public double BottomStripWidth => BottomStripCompact ? FilledBottomSizes * BottomCellWidth : double.NaN;
-    private const double BottomCellWidth = 64;
-    private int FilledBottomSizes => Math.Max(1, BottomStrip.Count(e => e.IsActive && e.HasQuantity));
+
 
     // ---- flags ----
     public ObservableCollection<FlagSizeEntry> FlagSizes { get; }
@@ -606,7 +640,7 @@ public class OrderViewModel : ObservableObject
             AdultShortView.Refresh(); AdultLongView.Refresh(); KidsView.Refresh(); PreschoolView.Refresh();
             BottomSizesView.Refresh(); OptionalSizesView.Refresh(); PrintMethodsView.Refresh(); ExtrasView.Refresh();
             BottomStripView.Refresh(); FlagSizesView.Refresh(); JacketExtrasView.Refresh(); SizeColumnsView.Refresh();
-            OnPropertyChanged(nameof(BottomStripCompact)); OnPropertyChanged(nameof(BottomStripWidth));
+            RefreshBottomLines();
             OnPropertyChanged(nameof(SizeRowCount)); OnPropertyChanged(nameof(ShowNoExtras)); OnPropertyChanged(nameof(ShowNoJacketExtras));
         }
     }
@@ -651,7 +685,7 @@ public class OrderViewModel : ObservableObject
         System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
         {
             var path = SheetOutput.AutoSavePdf(this);
-            if (path != null) { LastPdfPath = path; ShowStatus($"\u2714  Order #{OrderNumber} submitted  \u2022  PDF saved to Documents\\{SheetOutput.AutoFolderName}", 10); }
+            if (path != null) { LastPdfPath = path; ShowStatus($"\u2714  Order #{OrderNumber} submitted", 6); }
             else ShowStatus($"\u2714  Order #{OrderNumber} submitted  \u2022  PDF could not be saved automatically (use PDF)", 10);
         }), System.Windows.Threading.DispatcherPriority.Background);
     }

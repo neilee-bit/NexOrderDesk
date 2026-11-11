@@ -131,6 +131,14 @@ public partial class OptionsManagerWindow : Window
     private void OnNameChanged(object s, TextChangedEventArgs e)
     {
         if (Placeholder != null && NameBox != null) Placeholder.Visibility = NameBox.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        if (_ready && _colors && NameBox != null && HexBox != null && FoundText != null)
+        {
+            // the colour comes from the name (saved colours first, then the built-in colour names)
+            var (hex, hint) = MaterialColorEntry.LookUp(NameBox.Text);
+            HexBox.Text = hex ?? "#9AA0A9";
+            FoundText.Text = NameBox.Text.Trim().Length == 0 ? "Type a colour name - the colour is found automatically"
+                           : hex == null ? "Not a known colour - it gets a grey swatch" : hint;
+        }
     }
 
     private void OnHexChanged(object s, TextChangedEventArgs e) => UpdateSwatch();

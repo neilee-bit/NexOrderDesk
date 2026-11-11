@@ -3,6 +3,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using NexOrderDesk.Models;
 using NexOrderDesk.Services;
@@ -40,6 +41,11 @@ public static class SelfTest
             Step("empty columns / T-shirt"); EmptyColumns(s, SheetLayout.Tops);
             Step("empty columns / jacket"); EmptyColumns(s, SheetLayout.Jacket);
             Step("bottoms strip"); BottomsStrip(s);
+            Step("theme contrast"); ThemeContrast(s);
+            Step("bold selections"); BoldSelections(s);
+            Step("images and long names"); ImagesAndNames(s);
+            Step("material colours"); Colours(s);
+            Step("print and press"); PrintPress(s);
             Step("customers"); Customers(s);
             Step("customer box"); CustomerBoxUi(s);
             Step("done");
@@ -151,15 +157,127 @@ public static class SelfTest
     private static void BottomsStrip(SettingsService s)
     {
         var o = NewOrder(s, SheetLayout.Bottoms);
+        Check("bottoms: all adult sizes 4XS-5XL", string.Join(",", o.BottomSizes.Select(e => e.Label)) == "4XS,3XS,2XS,XS,S,M,L,XL,2XL,3XL,4XL,5XL",
+              string.Join(",", o.BottomSizes.Select(e => e.Label)));
+        Check("bottoms: Kids and PS lines hidden until switched on", o.BottomLines[0].IsShown && !o.BottomLines[1].IsShown && !o.BottomLines[2].IsShown, "");
+        o.IncludeKids = true; o.IncludeBottomPs = true;
+        Check("bottoms: + Kids and + PS add their lines", o.BottomLines.All(l => l.IsShown) &&
+              o.BottomLines[1].View.Cast<object>().Count() == 9 && o.BottomLines[2].View.Cast<object>().Count() == 8, "");
         o.BottomSizes.First(e => e.Label == "M").Quantity = 10;
-        o.BottomSizes.First(e => e.Label == "L").Quantity = 6;
-        Check("bottoms: full-width strip while editing", !o.BottomStripCompact && double.IsNaN(o.BottomStripWidth), "");
+        o.BottomSizes.First(e => e.Label == "5XL").Quantity = 2;
+        o.Kids.First(e => e.Label == "KM").Quantity = 6;
+        o.Preschool.First(e => e.Label == "PS").Quantity = 4;
+        Check("bottoms: total includes kids and PS", o.TotalQuantity == 22, o.TotalQuantity.ToString());
         o.SubmitCommand.Execute(null); Pump(); Pump();
-        Check("bottoms: only filled sizes, next to the total", o.BottomStripCompact && o.BottomStripWidth == 128 &&
-              o.BottomStripView.Cast<object>().Count() == 2 && o.TotalQuantity == 16, $"{o.BottomStripWidth} / {o.TotalQuantity}");
+        Check("bottoms: only filled sizes after Submit", o.BottomLines[0].View.Cast<object>().Count() == 2 && o.BottomLines[1].View.Cast<object>().Count() == 1 &&
+              o.BottomLines[2].View.Cast<object>().Count() == 1 && o.BottomLines[0].Compact && o.BottomLines[0].Width == 128, "");
         var printed = Texts(Render(o));
-        Check("bottoms: printed sizes and total", printed.Contains("M") && printed.Contains("L") && printed.Contains("16") && !printed.Contains("XS"),
-              string.Join(" | ", printed.Take(50)));
+        Check("bottoms: printed sizes, lines and total", new[] { "M", "5XL", "KM", "PS", "KIDS", "22" }.All(printed.Contains) && !printed.Contains("XS"),
+              string.Join(" | ", printed.Take(60)));
+        o.EditCommand.Execute(null); o.IncludeKids = false; Pump();
+        Check("bottoms: switching Kids off clears its quantities", o.TotalQuantity == 16 && !o.BottomLines[1].IsShown, o.TotalQuantity.ToString());
+        o.Detach();
+    }
+
+    private static void ThemeContrast(SettingsService s)
+    {
+        var o = NewOrder(s, SheetLayout.Tops);
+        foreach (var (hex, white) in new[] { ("#1B2A4A", true), ("#1E1E1E", true), ("#6A2C91", true), ("#FFC914", false), ("#6EC1F0", false) })
+        {
+            ThemeService.Apply(hex); Pump();
+            var on = (Application.Current.Resources["OnAccentBrush"] as SolidColorBrush)?.Color ?? Colors.Transparent;
+            Check($"theme {hex}: text on the theme colour is {(white ? "white" : "dark")}", (on == Colors.White) == white, on.ToString());
+            var printed = Render(o);
+            var num = FindAll<TextBox>(printed).FirstOrDefault(t => t.Text == o.OrderNumber);
+            var fg = (num?.Foreground as SolidColorBrush)?.Color;
+            Check($"theme {hex}: order number readable", fg.HasValue && NexOrderDesk.Models.ColorMath.Contrast(fg.Value, NexOrderDesk.Models.ColorMath.Parse(hex)) >= 3,
+                  fg?.ToString() ?? "not found");
+        }
+        ThemeService.Apply(o.AccentHex);
+        o.Detach();
+    }
+
+    private static void BoldSelections(SettingsService s)
+    {
+        var o = NewOrder(s, SheetLayout.Tops);
+        var printed = Render(o);
+        var neck = FindAll<ComboBox>(printed).FirstOrDefault(c => c.SelectedItem as string == o.NeckType);
+        Check("bold: neck type shown in bold", neck != null && neck.FontWeight.ToOpenTypeWeight() >= FontWeights.Bold.ToOpenTypeWeight(),
+              neck?.FontWeight.ToString() ?? "not found");
+        var combos = FindAll<ComboBox>(printed).Where(c => IsShown(c) && c.SelectedItem != null).ToList();
+        Check("bold: every selected value on the sheet is bold", combos.Count > 3 && combos.All(c => c.FontWeight.ToOpenTypeWeight() >= 700),
+              string.Join(", ", combos.Where(c => c.FontWeight.ToOpenTypeWeight() < 700).Select(c => c.SelectedItem)));
+        o.Detach();
+    }
+
+    private static void ImagesAndNames(SettingsService s)
+    {
+        // one picture on an empty area fills it (front image card and the DTF workspace)
+        foreach (var layout in new[] { SheetLayout.Tops, SheetLayout.Dtf })
+        {
+            var o = NewOrder(s, layout);
+            var live = Host(o);
+            var canvas = FindAll<FreeCanvasView>(live).First(c => IsShown(c));
+            var bmp = BitmapSource.Create(400, 200, 96, 96, PixelFormats.Bgr32, null, new byte[400 * 200 * 4], 400 * 4);
+            canvas.AddImages(new[] { bmp }); Pump();
+            var doc = canvas.Doc!;
+            var it = doc.Items.Single();
+            var area = new Size(canvas.Surface.ActualWidth, canvas.Surface.ActualHeight);
+            bool fills = it.W >= area.Width * 0.9 || it.H >= area.Height * 0.9;
+            Check($"{layout}: a single picture fills the image area", fills && it.X >= 0 && it.Y >= 0,
+                  $"picture {it.W:0}x{it.H:0} in area {area.Width:0}x{area.Height:0}");
+            Close(live, o);
+        }
+        var n = NewOrder(s, SheetLayout.Tops);
+        n.OrderName = "VERY LONG ORDER NAME FOR THE ANNUAL SPORTS MEET 2026 - HOUSE T-SHIRTS";
+        var sheet = Render(n);
+        var box = FindAll<TextBox>(sheet).FirstOrDefault(t => t.Text == n.OrderName);
+        var fits = box != null && box.FontSize < 14 && new FormattedText(box.Text, System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+            new Typeface(box.FontFamily, box.FontStyle, box.FontWeight, box.FontStretch), box.FontSize, Brushes.Black, 1).Width <= box.ActualWidth;
+        Check("long order name shrinks to fit its box", fits, box == null ? "not found" : $"font {box.FontSize}, box {box.ActualWidth:0}");
+        n.Detach();
+    }
+
+    private static void Colours(SettingsService s)
+    {
+        var o = NewOrder(s, SheetLayout.Tops);
+        var m = o.MaterialColors[0];
+        Check("colour: default WHITE", m.ColorName == "WHITE" && m.ColorFound, m.ColorName);
+        foreach (var (typed, hex) in new[] { ("BOTTLE GREEN", "#0B4D2C"), ("navy blue", "#1B2A4A"), ("MAROOM", "#6D1A2B"), ("ash melange", "#C3C5C7"), ("SKY", "#6EC1F0") })
+        {
+            m.ColorName = typed;
+            var got = (m.ColorBrush as SolidColorBrush)?.Color.ToString().Replace("#FF", "#");
+            Check($"colour: '{typed}' found automatically", m.ColorFound && got == hex, got ?? "");
+        }
+        m.ColorName = "QWERTY ZZZ";
+        Check("colour: unknown name kept as typed", !m.ColorFound && m.ColorName == "QWERTY ZZZ", "");
+        m.ColorName = "BOTTLE GREEN";
+        var sug = ColorBox.Suggest("nav").Select(x => x.Name).ToList();
+        Check("colour: suggestions while typing ('nav')", sug.Contains("NAVY BLUE"), string.Join(", ", sug.Take(8)));
+        var printed = Texts(Render(o));
+        Check("colour: printed on the sheet", printed.Contains("BOTTLE GREEN"), "");
+        o.Detach();
+    }
+
+    private static void PrintPress(SettingsService s)
+    {
+        var type = s.OrderTypes.FirstOrDefault(t => t.Id == "printpress");
+        if (type == null) { Fail("print & press: order type missing"); return; }
+        var o = new OrderViewModel(type, s, 9500) { OrderName = "SELFTEST PRESS" };
+        var live = Texts(Host(o));
+        Check("print & press: neck / collar / sleeve / placket type / button rows removed",
+              !live.Any(t => t.StartsWith("Neck Type") || t.StartsWith("Collar Color") || t.StartsWith("Sleeve Type") || t.StartsWith("Button")), string.Join(" | ", live.Take(40)));
+        Check("print & press: Collar Patch and Placket rows while editing", live.Contains("Collar Patch & Color:") && live.Contains("Placket & Color:"), "");
+        o.HasPlacket = true; o.PlacketColor = "NAVY";
+        o.AdultShort.First(e => e.Label == "M").Quantity = 3;
+        o.SubmitCommand.Execute(null); Pump(); Pump();
+        var printed = Texts(Render(o));
+        Check("print & press: unticked Collar Patch not on the submitted sheet", !printed.Contains("Collar Patch & Color:"), "");
+        Check("print & press: ticked Placket with its colour on the sheet", printed.Contains("Placket & Color:") && printed.Contains("NAVY"), string.Join(" | ", printed.Take(40)));
+        o.EditCommand.Execute(null); o.HasCollarPatch = true; o.CollarPatchColor = "RED"; o.SubmitCommand.Execute(null); Pump(); Pump();
+        printed = Texts(Render(o));
+        Check("print & press: ticked Collar Patch appears with its colour", printed.Contains("Collar Patch & Color:") && printed.Contains("RED"), "");
+        Check("submit: the save location is not shown", !(o.StatusText ?? "").Contains("Documents") && !(o.StatusText ?? "").Contains("\\"), o.StatusText ?? "");
         o.Detach();
     }
 
@@ -200,6 +318,10 @@ public static class SelfTest
         var tb = Find<TextBox>(box, "Box")!;
         w.Activate(); tb.Focus(); Pump();
         Check("customer box: clicking the field lists the customers", box.IsDropDownOpen && box.Suggestions.Count >= 29, $"{box.IsDropDownOpen} {box.Suggestions.Count}");
+        Pump();
+        var bar = box.DropPopup.Child == null ? null : FindAll<System.Windows.Controls.Primitives.ScrollBar>(box.DropPopup.Child)
+                      .FirstOrDefault(b => b.Orientation == Orientation.Vertical && b.Visibility == Visibility.Visible);
+        Check("customer box: slim scroll bar", bar != null && bar.ActualWidth <= 8, bar == null ? "no scroll bar" : bar.ActualWidth.ToString("0.0"));
         tb.Text = "kav"; Pump();
         Check("customer box: typing filters ('kav')", box.Suggestions.SequenceEqual(new[] { "Kavee Creations" }), string.Join(", ", box.Suggestions));
         tb.RaiseEvent(new System.Windows.Input.KeyEventArgs(System.Windows.Input.Keyboard.PrimaryDevice, PresentationSource.FromVisual(tb), 0, System.Windows.Input.Key.Down)

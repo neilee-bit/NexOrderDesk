@@ -44,7 +44,9 @@
   </UserControl.Resources>
 
   <Border Style="{StaticResource Card}" Padding="8,4">
-    <Grid>
+   <Grid>
+    <!-- T-shirt / Cut and Print / custom tops: the full spec list -->
+    <Grid Visibility="{Binding IsStandardTops, Converter={StaticResource BoolToVis}}">
       <Grid.ColumnDefinitions><ColumnDefinition Width="0.43*"/><ColumnDefinition Width="0.57*"/></Grid.ColumnDefinitions>
       <Grid.RowDefinitions>
         <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition Height="Auto"/>
@@ -107,5 +109,85 @@
       <TextBox Grid.Row="6" Grid.Column="1" Style="{StaticResource SpecBox}" Height="18" Text="{Binding CollarSizeLabel, UpdateSourceTrigger=PropertyChanged}"
                Visibility="{Binding ShowCollarLabel, Converter={StaticResource BoolToVis}}"/>
     </Grid>
+
+    <!-- Print and Press (2.9): only Collar Patch, Placket and Piping. Collar Patch and Placket appear on the submitted
+         sheet only when ticked (the rows that are left share the space). -->
+    <UniformGrid Columns="1" Visibility="{Binding IsPrintPress, Converter={StaticResource BoolToVis}}">
+      <Grid x:Name="CollarPatchRow">
+        <Grid.Style><Style TargetType="Grid"><Style.Triggers>
+          <MultiDataTrigger>
+            <MultiDataTrigger.Conditions>
+              <Condition Binding="{Binding HasCollarPatch}" Value="False"/>
+              <Condition Binding="{Binding Path=(h:OutputMode.IsActive), RelativeSource={RelativeSource Self}}" Value="True"/>
+            </MultiDataTrigger.Conditions>
+            <Setter Property="Visibility" Value="Collapsed"/>
+          </MultiDataTrigger>
+        </Style.Triggers></Style></Grid.Style>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="0.43*"/><ColumnDefinition Width="0.57*"/></Grid.ColumnDefinitions>
+        <Label Style="{StaticResource SpecLabel}">
+          <DockPanel>
+            <CheckBox Style="{StaticResource EditOnlyCheck}" IsChecked="{Binding HasCollarPatch, Mode=TwoWay}" ToolTip="Tick if this order has a collar patch"/>
+            <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left"><TextBlock Style="{StaticResource LabelText}" Text="Collar Patch &amp; Color:"/></Viewbox>
+          </DockPanel>
+        </Label>
+        <Grid Grid.Column="1">
+          <TextBox Style="{StaticResource RoundBox}" Text="{Binding CollarPatchColor, UpdateSourceTrigger=PropertyChanged}"
+                   Visibility="{Binding HasCollarPatch, Converter={StaticResource BoolToVis}}" ToolTip="Collar patch colour / details"/>
+          <TextBlock Text="type collar patch colour…" Style="{StaticResource EmptyHint}"
+                     Visibility="{Binding ShowCollarPatchHint, Converter={StaticResource BoolToVis}}"/>
+          <Border Style="{StaticResource RoundShell}" Visibility="{Binding HasCollarPatch, Converter={StaticResource InvBoolToVis}}">
+            <TextBlock Text="tick to add a collar patch" FontSize="9.5" FontStyle="Italic" Foreground="#A0A4AE" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+        </Grid>
+      </Grid>
+
+      <Grid x:Name="PlacketRow">
+        <Grid.Style><Style TargetType="Grid"><Style.Triggers>
+          <MultiDataTrigger>
+            <MultiDataTrigger.Conditions>
+              <Condition Binding="{Binding HasPlacket}" Value="False"/>
+              <Condition Binding="{Binding Path=(h:OutputMode.IsActive), RelativeSource={RelativeSource Self}}" Value="True"/>
+            </MultiDataTrigger.Conditions>
+            <Setter Property="Visibility" Value="Collapsed"/>
+          </MultiDataTrigger>
+        </Style.Triggers></Style></Grid.Style>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="0.43*"/><ColumnDefinition Width="0.57*"/></Grid.ColumnDefinitions>
+        <Label Style="{StaticResource SpecLabel}">
+          <DockPanel>
+            <CheckBox Style="{StaticResource EditOnlyCheck}" IsChecked="{Binding HasPlacket, Mode=TwoWay}" ToolTip="Tick if this order has a placket"/>
+            <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left"><TextBlock Style="{StaticResource LabelText}" Text="Placket &amp; Color:"/></Viewbox>
+          </DockPanel>
+        </Label>
+        <Grid Grid.Column="1">
+          <TextBox Style="{StaticResource RoundBox}" Text="{Binding PlacketColor, UpdateSourceTrigger=PropertyChanged}"
+                   Visibility="{Binding HasPlacket, Converter={StaticResource BoolToVis}}" ToolTip="Placket colour / details"/>
+          <TextBlock Text="type placket colour…" Style="{StaticResource EmptyHint}"
+                     Visibility="{Binding ShowPlacketHint, Converter={StaticResource BoolToVis}}"/>
+          <Border Style="{StaticResource RoundShell}" Visibility="{Binding HasPlacket, Converter={StaticResource InvBoolToVis}}">
+            <TextBlock Text="tick to add a placket" FontSize="9.5" FontStyle="Italic" Foreground="#A0A4AE" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+        </Grid>
+      </Grid>
+
+      <Grid x:Name="PressPipingRow">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="0.43*"/><ColumnDefinition Width="0.57*"/></Grid.ColumnDefinitions>
+        <Label Style="{StaticResource SpecLabel}">
+          <DockPanel>
+            <CheckBox Style="{StaticResource EditOnlyCheck}" IsChecked="{Binding HasPiping, Mode=TwoWay}" ToolTip="Tick if this order has piping"/>
+            <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left"><TextBlock Style="{StaticResource LabelText}" Text="Piping &amp; Piping Color:"/></Viewbox>
+          </DockPanel>
+        </Label>
+        <Grid Grid.Column="1">
+          <TextBox Style="{StaticResource RoundBox}" Text="{Binding PipingText, UpdateSourceTrigger=PropertyChanged}"
+                   Visibility="{Binding HasPiping, Converter={StaticResource BoolToVis}}" ToolTip="Piping details / colour"/>
+          <TextBlock Text="type piping details / colour…" Style="{StaticResource EmptyHint}"
+                     Visibility="{Binding ShowPipingHint, Converter={StaticResource BoolToVis}}"/>
+          <Border Style="{StaticResource RoundShell}" Visibility="{Binding NoPiping, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="No piping" FontSize="10.5" FontStyle="Italic" Foreground="#8A8F98" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+        </Grid>
+      </Grid>
+    </UniformGrid>
+   </Grid>
   </Border>
 </UserControl>

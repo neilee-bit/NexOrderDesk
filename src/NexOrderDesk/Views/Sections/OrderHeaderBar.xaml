@@ -6,7 +6,7 @@
     </Grid.ColumnDefinitions>
     <HeaderedContentControl Style="{StaticResource FieldCard}" Header="Order Number" Margin="0,0,8,0"
                             Background="{DynamicResource AccentBrush}">
-      <TextBox Style="{StaticResource ValueBox}" FontSize="17" FontWeight="ExtraBold" Text="{Binding OrderNumber, UpdateSourceTrigger=PropertyChanged}"
+      <TextBox Style="{StaticResource ValueBox}" FontSize="17" FontWeight="ExtraBold" h:FitText.Enabled="True" Foreground="{DynamicResource OnAccentBrush}" CaretBrush="{DynamicResource OnAccentBrush}" Text="{Binding OrderNumber, UpdateSourceTrigger=PropertyChanged}"
                ToolTip="Auto-suggested (last order + 1). Click to override."/>
     </HeaderedContentControl>
     <HeaderedContentControl Grid.Column="1" Style="{StaticResource FieldCard}" Header="Delivery Date" Margin="0,0,8,0">
@@ -45,7 +45,8 @@
       </Grid>
     </HeaderedContentControl>
     <HeaderedContentControl Grid.Column="2" Style="{StaticResource FieldCard}" Header="Order Name" Margin="0,0,8,0">
-      <TextBox Style="{StaticResource ValueBox}" Text="{Binding OrderName, UpdateSourceTrigger=PropertyChanged}"/>
+      <!-- long order names shrink to fit the box -->
+      <TextBox Style="{StaticResource ValueBox}" h:FitText.Enabled="True" Text="{Binding OrderName, UpdateSourceTrigger=PropertyChanged}"/>
     </HeaderedContentControl>
     <HeaderedContentControl Grid.Column="3" Style="{StaticResource FieldCard}" Header="Customer" Margin="0,0,8,0">
       <s:CustomerBox/>

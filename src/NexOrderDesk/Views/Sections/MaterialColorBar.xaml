@@ -33,41 +33,31 @@
             <Border Background="{DynamicResource AccentBrush}" CornerRadius="14,16,16,14" Padding="9,0,12,0">
               <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <Viewbox Width="13" Height="13" Margin="0,0,5,0">
-                  <Path Data="M12,2 L2,7 L12,12 L22,7 Z M2,12 L12,17 L22,12 M2,17 L12,22 L22,17" Stroke="#1E1E1E" StrokeThickness="2" StrokeLineJoin="Round"/>
+                  <Path Data="M12,2 L2,7 L12,12 L22,7 Z M2,12 L12,17 L22,12 M2,17 L12,22 L22,17" Stroke="{DynamicResource OnAccentBrush}" StrokeThickness="2" StrokeLineJoin="Round"/>
                 </Viewbox>
-                <TextBlock Text="{Binding PillTitle}" FontSize="11" FontWeight="Bold" Foreground="#1E1E1E"/>
+                <TextBlock Text="{Binding PillTitle}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource OnAccentBrush}"/>
               </StackPanel>
             </Border>
-            <ComboBox Grid.Column="1" Style="{StaticResource FlatCombo}" Margin="8,2,4,2" FontSize="12" FontWeight="SemiBold"
+            <ComboBox Grid.Column="1" Style="{StaticResource FlatCombo}" Margin="8,2,4,2" FontSize="12" FontWeight="Bold"
                       h:ComboHelper.ManageKey="{Binding DataContext.MaterialManageKey, RelativeSource={RelativeSource AncestorType=s:MaterialColorBar}}"
                       HorizontalContentAlignment="Left" ToolTip="{Binding Material}"
                       ItemsSource="{Binding DataContext.MaterialOptions, RelativeSource={RelativeSource AncestorType=s:MaterialColorBar}}"
                       SelectedItem="{Binding Material}"/>
             <Rectangle Grid.Column="2" Fill="{StaticResource LineBrush}" Margin="0,5"/>
             <!-- colour: swatch + name, at the right end -->
-            <ComboBox Grid.Column="3" Margin="4,2,2,2" h:ComboHelper.ManageKey="colors"
-                      HorizontalContentAlignment="Right" ToolTip="{Binding SelectedColor.Name}"
-                      ItemsSource="{Binding DataContext.Settings.Colors, RelativeSource={RelativeSource AncestorType=s:MaterialColorBar}}"
-                      SelectedItem="{Binding SelectedColor}">
-              <ComboBox.Style>
-                <Style TargetType="ComboBox" BasedOn="{StaticResource FlatCombo}">
-                  <Setter Property="MaxWidth" Value="118"/>
+            <!-- colour: type a name, the swatch is found automatically (2.9) -->
+            <s:ColorBox Grid.Column="3" Margin="4,2,2,2" VerticalAlignment="Center">
+              <s:ColorBox.Style>
+                <Style TargetType="s:ColorBox">
+                  <Setter Property="MaxWidth" Value="130"/><Setter Property="MinWidth" Value="80"/>
                   <Style.Triggers>
                     <DataTrigger Binding="{Binding DataContext.ProminentColor, RelativeSource={RelativeSource AncestorType=s:MaterialColorBar}}" Value="True">
-                      <Setter Property="MaxWidth" Value="200"/><Setter Property="MinWidth" Value="120"/><Setter Property="FontSize" Value="13"/>
+                      <Setter Property="MaxWidth" Value="200"/><Setter Property="MinWidth" Value="120"/>
                     </DataTrigger>
                   </Style.Triggers>
                 </Style>
-              </ComboBox.Style>
-              <ComboBox.ItemTemplate>
-                <DataTemplate DataType="{x:Type m:ColorOption}">
-                  <StackPanel Orientation="Horizontal">
-                    <Border Width="16" Height="16" CornerRadius="8" Background="{Binding Brush}" BorderBrush="#C8C8C8" BorderThickness="0.8" Margin="0,0,6,0"/>
-                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontWeight="Bold"/>
-                  </StackPanel>
-                </DataTemplate>
-              </ComboBox.ItemTemplate>
-            </ComboBox>
+              </s:ColorBox.Style>
+            </s:ColorBox>
             <Grid Grid.Column="4">
               <Grid.Style>
                 <Style TargetType="Grid">

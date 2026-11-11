@@ -16,7 +16,7 @@
         </Border.Style>
         <Grid>
           <Viewbox StretchDirection="DownOnly" Margin="26,0">
-            <TextBlock Text="{Binding PrintSummary}" FontSize="17" FontWeight="ExtraBold" Foreground="#1E1E1E"/>
+            <TextBlock Text="{Binding PrintSummary}" FontSize="17" FontWeight="ExtraBold" Foreground="{DynamicResource OnAccentBrush}"/>
           </Viewbox>
           <Button Content="&#x2699;" Width="16" Height="15" HorizontalAlignment="Right" Margin="0,0,4,0" FontSize="10"
                   Click="OnManage" ToolTip="Add / rename / remove print types">

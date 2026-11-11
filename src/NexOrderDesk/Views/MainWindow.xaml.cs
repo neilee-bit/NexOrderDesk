@@ -54,6 +54,15 @@ public partial class MainWindow : Window
         var tab = (DataContext as MainViewModel)?.SelectedTab;
         bool ctrl = (Keyboard.Modifiers & ModifierKeys.Control) != 0;
         if (e.Key == Key.P && ctrl && tab != null) { tab.PrintCommand.Execute(null); e.Handled = true; return; }
+        // Ctrl+N: new order (opens the order-type menu); Ctrl+Shift+N: new order of the same type as this tab
+        if (e.Key == Key.N && ctrl)
+        {
+            e.Handled = true;
+            bool shift = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
+            if (shift && tab != null && DataContext is MainViewModel vm) vm.NewOrderCommand.Execute(tab.Type);
+            else AddToggle.IsChecked = true;
+            return;
+        }
         // Ctrl+C on a selected picture (front cards, back side, DTF, flags) copies it; in a text field it copies text as usual
         if (e.Key == Key.C && ctrl && tab?.IsEditable == true)
         {

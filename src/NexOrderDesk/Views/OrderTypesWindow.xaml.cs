@@ -21,7 +21,8 @@ public partial class OrderTypesWindow : Window
         {
             var rb = new RadioButton
             {
-                Style = (Style)Resources["ChoiceToggle"], GroupName = "Icon", Tag = key, Width = 44, Height = 36, Padding = new Thickness(0),
+                Style = (Style)Resources["ChoiceToggle"], GroupName = "Icon", Tag = key, Width = 38, Height = 34, Padding = new Thickness(0),
+                ToolTip = OrderIcons.Title(key), Margin = new Thickness(0, 0, 5, 5),
                 Content = new Viewbox { Width = 20, Height = 20, Child = new Path { Data = OrderIcons.Get(key), Fill = Brushes.Black } }
             };
             rb.Checked += (s, e) => { if (!_loading && Current is { } t) IconUpload.Clear(t); OnFieldChanged(s, e); };   // built-in icon chosen

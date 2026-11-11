@@ -160,7 +160,8 @@ public static class DefaultOptions
     public static string[] KidsSizes => new[] { "K3XS","K2XS","KXS","KS","KM","KL","KXL","K2XL","K3XL" };
     public static string[] PreschoolSizes => new[] { "P4XS","P3XS","P2XS","PXS","PS","PM","PL","PXL" };   // 4th column "PS (S/S)"
     /// <summary>Bottoms size breakdown.</summary>
-    public static string[] BottomSizes => new[] { "XS","S","M","L","XL","2XL","3XL","4XL" };
+    /// <summary>Bottoms / shorts adult sizes - the full range like the T-shirt sheet (2.9; was XS-4XL).</summary>
+    public static string[] BottomSizes => new[] { "4XS","3XS","2XS","XS","S","M","L","XL","2XL","3XL","4XL","5XL" };
     /// <summary>Blank optional-size rows that appear with "+ Other sizes" on the bottoms sheet.</summary>
     public const int OptionalRowsStart = 4, OptionalRowsMax = 12;
 }

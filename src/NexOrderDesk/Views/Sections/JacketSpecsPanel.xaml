@@ -24,7 +24,9 @@
               <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBrush}"/>
               <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentDarkBrush}"/>
               <Setter TargetName="Tick" Property="Visibility" Value="Visible"/>
-              <Setter TargetName="Box" Property="BorderBrush" Value="#1E1E1E"/>
+              <Setter TargetName="Tick" Property="Stroke" Value="{DynamicResource OnAccentBrush}"/>
+              <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource OnAccentBrush}"/>
+              <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}"/>
             </Trigger>
             <!-- output: just the name, no tick box -->
             <Trigger Property="h:OutputMode.IsActive" Value="True">
@@ -59,12 +61,18 @@
           </Style>
         </Border.Style>
       </Border>
-      <Label Grid.Row="1" Content="Collar:" Style="{StaticResource SpecLabel}"/>
+      <Label Grid.Row="1" Content="Collar:">
+        <Label.Style>
+          <Style TargetType="Label" BasedOn="{StaticResource SpecLabel}">
+            <Style.Triggers><DataTrigger Binding="{Binding IsHooded}" Value="True"><Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}"/></DataTrigger></Style.Triggers>
+          </Style>
+        </Label.Style>
+      </Label>
       <ComboBox Grid.Row="1" Grid.Column="1" BorderBrush="{StaticResource LineBrush}"
                 h:ComboHelper.ManageKey="jacketcollars" ItemsSource="{Binding Settings.JacketCollars}" SelectedItem="{Binding JacketCollar}">
         <ComboBox.Style>
           <Style TargetType="ComboBox" BasedOn="{StaticResource FlatCombo}">
-            <Style.Triggers><DataTrigger Binding="{Binding IsHooded}" Value="True"><Setter Property="FontWeight" Value="ExtraBold"/><Setter Property="FontSize" Value="12"/></DataTrigger></Style.Triggers>
+            <Style.Triggers><DataTrigger Binding="{Binding IsHooded}" Value="True"><Setter Property="FontWeight" Value="ExtraBold"/><Setter Property="FontSize" Value="12"/><Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}"/></DataTrigger></Style.Triggers>
           </Style>
         </ComboBox.Style>
       </ComboBox>

@@ -43,7 +43,7 @@
 
       <StackPanel DockPanel.Dock="Bottom">
         <CheckBox x:Name="IncludeBack" Content="Include the back side" Margin="2,4,0,10" FontSize="11.5" Checked="OnOptionChanged" Unchecked="OnOptionChanged"/>
-        <Button x:Name="PrintBtn" Style="{StaticResource DlgButton}" Background="{DynamicResource AccentBrush}" Content="&#x1F5A8;  Print…" Click="OnPrint" Margin="0,0,0,6"/>
+        <Button x:Name="PrintBtn" Style="{StaticResource DlgButton}" Background="{DynamicResource AccentBrush}" Content="&#x1F5A8;  Print…" Foreground="{DynamicResource OnAccentBrush}" Click="OnPrint" Margin="0,0,0,6"/>
         <Button x:Name="PdfBtn" Style="{StaticResource DlgButton}" Content="&#x1F4C4;  Save PDF…" Click="OnPdf" Margin="0,0,0,6"/>
         <Button Style="{StaticResource DlgButton}" Content="Close" IsCancel="True" Click="OnClose"/>
       </StackPanel>

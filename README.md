@@ -1,4 +1,4 @@
-# NEX ORDER DESK 2.8 (native WPF, .NET 8)
+# NEX ORDER DESK 2.9 (native WPF, .NET 8)
 
 Open **NexOrderDesk 2.0 version.sln** in Visual Studio 2022 (workload ".NET desktop development"), set configuration Debug, press F5.
 Or double-click **build.bat** (needs the .NET 8 SDK) - it builds, starts the app, and writes build_errors.txt if anything fails.
@@ -25,6 +25,13 @@ VERSION, INSTALLERS AND ONLINE RELEASES  ->  full guide: RELEASING.md
 - build_release.bat     -> both MSIs + update.json + SHA256SUMS.txt + RELEASE_NOTES.md in the "release" folder
 - GitHub: push a tag like v2.7.1 -> .github/workflows/release.yml builds and uploads everything as a draft release.
 - App icon: src\NexOrderDesk\Assets\app.ico
+
+New in 2.9
+- Readable text on dark theme colours (order number, totals, print method …): white on dark, dark on light.
+- Material colour: type a colour name, the swatch is found automatically (no colour codes).
+- Print and Press: only Collar Patch / Placket (tick + colour, shown when ticked) and Piping.
+- Bottoms: 4XS-5XL + Kids and PS size lines. 18 more apparel icons. Ctrl+N new order.
+- Bold selections, slim suggestion scroll bars, single picture fills its area, long names shrink to fit.
 
 New in 2.8
 - Fixed: the selected coordinator was erased when the sheet was drawn for Submit / Print / PDF - now always on the order.

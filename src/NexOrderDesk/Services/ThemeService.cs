@@ -32,6 +32,11 @@ public static class ThemeService
         d["AccentSoftBrush"] = ColorMath.Brush(soft);
         d["AccentTintBrush"] = ColorMath.Brush(tint);
         d["BannerBrush"] = Gradient(new Point(0, 0), new Point(1, 0), (light, 0), (a, 0.12), (a, 0.8), (dark, 1));
+        // text on coloured backgrounds: dark on light themes, white on dark themes (order number, totals, print method …)
+        d["OnAccentBrush"] = ColorMath.Brush(ColorMath.TextOn(a));
+        d["OnAccentTintBrush"] = ColorMath.Brush(ColorMath.TextOn(tint));
+        d["OnAccentLightBrush"] = ColorMath.Brush(ColorMath.TextOn(light));
+        d["OnBannerBrush"] = ColorMath.Brush(ColorMath.TextOn(ColorMath.Mix(light, a, 0.6)));
         d["SheetBrush"] = Gradient(new Point(0, 0), new Point(0, 1), (Colors.White, 0), (Colors.White, 0.7), (soft, 1));
 
         var dicts = Application.Current.Resources.MergedDictionaries;

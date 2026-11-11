@@ -6,6 +6,10 @@
   <SolidColorBrush x:Key="AccentDarkBrush" Color="#F2A900"/>
   <SolidColorBrush x:Key="AccentSoftBrush" Color="#FFF6D1"/>
   <SolidColorBrush x:Key="AccentTintBrush" Color="#FFE27A"/>
+  <SolidColorBrush x:Key="OnAccentBrush" Color="#1E1E1E"/>
+  <SolidColorBrush x:Key="OnAccentTintBrush" Color="#1E1E1E"/>
+  <SolidColorBrush x:Key="OnAccentLightBrush" Color="#1E1E1E"/>
+  <SolidColorBrush x:Key="OnBannerBrush" Color="#1E1E1E"/>
   <LinearGradientBrush x:Key="BannerBrush" StartPoint="0,0" EndPoint="1,0">
     <GradientStop Color="#FFE680" Offset="0"/>
     <GradientStop Color="#FFC914" Offset="0.12"/>

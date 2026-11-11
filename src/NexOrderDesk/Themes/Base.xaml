@@ -138,6 +138,7 @@
             <Trigger Property="IsChecked" Value="True">
               <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBrush}"/>
               <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentDarkBrush}"/>
+              <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}"/>
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -169,6 +170,7 @@
   </Style>
   <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
     <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}"/>
   </Style>
 
   <!-- Category tab (toolbar) -->
@@ -200,8 +202,49 @@
   </Style>
 
   <!-- Flat combo box -->
+  <!-- Slim, rounded scroll bar for drop-down lists (6 px, no arrow buttons) -->
+  <Style x:Key="SlimScrollBar" TargetType="ScrollBar">
+    <Setter Property="Width" Value="6"/>
+    <Setter Property="MinWidth" Value="6"/>
+    <Setter Property="Margin" Value="0,3,2,3"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ScrollBar">
+          <Track x:Name="PART_Track" IsDirectionReversed="True">
+            <Track.DecreaseRepeatButton>
+              <RepeatButton Command="ScrollBar.PageUpCommand" Focusable="False" Opacity="0">
+                <RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent"/></ControlTemplate></RepeatButton.Template>
+              </RepeatButton>
+            </Track.DecreaseRepeatButton>
+            <Track.IncreaseRepeatButton>
+              <RepeatButton Command="ScrollBar.PageDownCommand" Focusable="False" Opacity="0">
+                <RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent"/></ControlTemplate></RepeatButton.Template>
+              </RepeatButton>
+            </Track.IncreaseRepeatButton>
+            <Track.Thumb>
+              <Thumb>
+                <Thumb.Template>
+                  <ControlTemplate TargetType="Thumb">
+                    <Border x:Name="T" CornerRadius="3" Background="#C9CDD3" MinHeight="24"/>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="T" Property="Background" Value="#9AA0A9"/></Trigger>
+                      <Trigger Property="IsDragging" Value="True"><Setter TargetName="T" Property="Background" Value="#6B7280"/></Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </Thumb.Template>
+              </Thumb>
+            </Track.Thumb>
+          </Track>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
   <Style x:Key="FlatCombo" TargetType="ComboBox">
     <Setter Property="FontSize" Value="11"/>
+    <!-- the chosen value (e.g. "Full Collar") is shown in bold; the list itself stays regular -->
+    <Setter Property="FontWeight" Value="Bold"/>
     <Setter Property="HorizontalContentAlignment" Value="Center"/>
     <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
     <Setter Property="BorderThickness" Value="0,0,0,1"/>
@@ -233,8 +276,9 @@
                    Focusable="False" PopupAnimation="Fade">
               <Border MinWidth="{TemplateBinding ActualWidth}" Background="White" BorderBrush="{StaticResource LineBrush}"
                       BorderThickness="1" CornerRadius="6" Margin="0,2,6,8" Effect="{StaticResource SoftShadow}">
+                <Border.Resources><Style TargetType="ScrollBar" BasedOn="{StaticResource SlimScrollBar}"/></Border.Resources>
                 <StackPanel>
-                  <ScrollViewer MaxHeight="190"><ItemsPresenter/></ScrollViewer>
+                  <ScrollViewer MaxHeight="190" CanContentScroll="False" HorizontalScrollBarVisibility="Disabled"><ItemsPresenter/></ScrollViewer>
                   <Border x:Name="Footer" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0">
                     <Button Content="+ Add / edit list…" Click="Manage_Click" Padding="8,5" FontSize="10" FontWeight="SemiBold"
                             Cursor="Hand" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left"
@@ -260,6 +304,8 @@
         <Style TargetType="ComboBoxItem">
           <Setter Property="Padding" Value="8,4"/>
           <Setter Property="HorizontalContentAlignment" Value="Left"/>
+          <Setter Property="FontWeight" Value="Normal"/>
+          <Style.Triggers><Trigger Property="IsSelected" Value="True"><Setter Property="FontWeight" Value="Bold"/></Trigger></Style.Triggers>
         </Style>
       </Setter.Value>
     </Setter>

@@ -23,7 +23,7 @@
             <Button.Template>
               <ControlTemplate TargetType="Button">
                 <Border Background="{DynamicResource AccentBrush}" CornerRadius="12" Padding="10,3">
-                  <ContentPresenter TextElement.FontSize="11" TextElement.FontWeight="Bold" TextElement.Foreground="#1E1E1E"/>
+                  <ContentPresenter TextElement.FontSize="11" TextElement.FontWeight="Bold" TextElement.Foreground="{DynamicResource OnAccentBrush}"/>
                 </Border>
               </ControlTemplate>
             </Button.Template>
@@ -39,7 +39,7 @@
             <ListBox.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ListBox.ItemsPanel>
           </ListBox>
           <ToggleButton x:Name="AddToggle" Content="+" Width="28" Height="26" FontSize="16" FontWeight="Bold" Foreground="White"
-                        Background="#3A3A3A" BorderThickness="0" Cursor="Hand" VerticalAlignment="Bottom" Margin="2,0,0,2" ToolTip="New order">
+                        Background="#3A3A3A" BorderThickness="0" Cursor="Hand" VerticalAlignment="Bottom" Margin="2,0,0,2" ToolTip="New order (Ctrl+N)">
             <ToggleButton.Template>
               <ControlTemplate TargetType="ToggleButton">
                 <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6">

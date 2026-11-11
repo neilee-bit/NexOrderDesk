@@ -24,7 +24,9 @@
               <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBrush}"/>
               <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentDarkBrush}"/>
               <Setter TargetName="Tick" Property="Visibility" Value="Visible"/>
-              <Setter TargetName="Box" Property="BorderBrush" Value="#1E1E1E"/>
+              <Setter TargetName="Tick" Property="Stroke" Value="{DynamicResource OnAccentBrush}"/>
+              <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource OnAccentBrush}"/>
+              <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}"/>
             </Trigger>
             <!-- output: just the name, no tick box -->
             <Trigger Property="h:OutputMode.IsActive" Value="True">

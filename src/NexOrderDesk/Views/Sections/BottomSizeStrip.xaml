@@ -12,7 +12,8 @@
     </Style>
   </UserControl.Resources>
 
-  <Border Style="{StaticResource Card}" Height="100">
+  <!-- 2.9: up to three lines - ADULTS (4XS-5XL + other sizes), KIDS (+ Kids), PS (+ PS) - with the total beside them -->
+  <Border Style="{StaticResource Card}" MinHeight="100">
     <Grid Margin="0">
       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="86"/></Grid.ColumnDefinitions>
       <Grid.RowDefinitions><RowDefinition Height="20"/><RowDefinition Height="*"/></Grid.RowDefinitions>
@@ -22,6 +23,10 @@
       <DockPanel Margin="10,0,6,0">
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
                     Visibility="{Binding IsEditable, Converter={StaticResource BoolToVis}}">
+          <ToggleButton Style="{StaticResource PillToggle}" Content="+ Kids" Width="44" Height="15" FontSize="8" Margin="0,0,4,0"
+                        IsChecked="{Binding IncludeKids, Mode=TwoWay}" ToolTip="Add the kids sizes: K3XS to K3XL"/>
+          <ToggleButton Style="{StaticResource PillToggle}" Content="+ PS" Width="38" Height="15" FontSize="8" Margin="0,0,4,0"
+                        IsChecked="{Binding IncludeBottomPs, Mode=TwoWay}" ToolTip="Add the pre-school sizes: P4XS to PXL"/>
           <ToggleButton Style="{StaticResource PillToggle}" Content="{Binding ExtraSizesText}" Width="72" Height="15" FontSize="8"
                         IsChecked="{Binding IncludeExtraSizes, Mode=TwoWay}" ToolTip="{Binding ExtraSizesTip}"/>
           <Button Style="{StaticResource SmallBtn}" Content="+ size" Margin="4,0,0,0" Command="{Binding AddOptionalSizeCommand}"
@@ -30,33 +35,44 @@
         <TextBlock Text="SIZE BREAKDOWN" FontSize="10.5" FontWeight="ExtraBold" VerticalAlignment="Center"/>
       </DockPanel>
 
-      <!-- sizes side by side -->
-      <!-- submitted: only filled sizes, normal cell width, right next to the total (BottomStripCompact) -->
-      <ItemsControl Grid.Row="1" ItemsSource="{Binding BottomStripView}" Margin="6,4,6,6"
-                    Width="{Binding BottomStripWidth}">
-        <ItemsControl.Style>
-          <Style TargetType="ItemsControl">
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Style.Triggers>
-              <DataTrigger Binding="{Binding BottomStripCompact}" Value="True"><Setter Property="HorizontalAlignment" Value="Right"/></DataTrigger>
-            </Style.Triggers>
-          </Style>
-        </ItemsControl.Style>
-        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+      <!-- size lines -->
+      <ItemsControl Grid.Row="1" ItemsSource="{Binding BottomLines}" Margin="0,2,0,4" VerticalAlignment="Center">
         <ItemsControl.ItemTemplate>
-          <DataTemplate DataType="{x:Type m:SizeEntry}">
-            <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,1,0" Margin="0">
-              <Grid>
-                <Grid.RowDefinitions><RowDefinition Height="18"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                <Border Background="#F3F4F6" CornerRadius="3" Margin="2,0"/>
-                <Viewbox StretchDirection="DownOnly" Margin="2,0" Visibility="{Binding IsCustom, Converter={StaticResource InvBoolToVis}}">
-                  <TextBlock Text="{Binding Label}" FontSize="10.5" FontWeight="Bold" Foreground="#000000"/>
-                </Viewbox>
-                <TextBox Style="{StaticResource LabelBox}" Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" ToolTip="Type the size (e.g. 5XL, 28, 30)"
-                         Visibility="{Binding IsCustom, Converter={StaticResource BoolToVis}}"/>
-                <TextBox Grid.Row="1" Style="{StaticResource CellBox}" FontSize="16" Text="{Binding QtyText, UpdateSourceTrigger=PropertyChanged}" Validation.ErrorTemplate="{x:Null}"/>
-              </Grid>
-            </Border>
+          <DataTemplate DataType="{x:Type m:StripLine}">
+            <Grid Height="58" Visibility="{Binding IsShown, Converter={StaticResource BoolToVis}}">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="30"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+              <Viewbox StretchDirection="DownOnly" Margin="3,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Title}" FontSize="8.5" FontWeight="ExtraBold" Foreground="#6B7280"/>
+              </Viewbox>
+              <ItemsControl Grid.Column="1" ItemsSource="{Binding View}" Margin="0,2,6,2" Width="{Binding Width}">
+                <ItemsControl.Style>
+                  <Style TargetType="ItemsControl">
+                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding Compact}" Value="True"><Setter Property="HorizontalAlignment" Value="Right"/></DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </ItemsControl.Style>
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="{x:Type m:SizeEntry}">
+                    <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,1,0" Margin="0">
+                      <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="18"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                        <Border Background="#F3F4F6" CornerRadius="3" Margin="1,0"/>
+                        <Viewbox StretchDirection="DownOnly" Margin="1,0" Visibility="{Binding IsCustom, Converter={StaticResource InvBoolToVis}}">
+                          <TextBlock Text="{Binding Label}" FontSize="10.5" FontWeight="Bold" Foreground="#000000"/>
+                        </Viewbox>
+                        <TextBox Style="{StaticResource LabelBox}" Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" ToolTip="Type the size (e.g. 6XL, 28, 30)"
+                                 Visibility="{Binding IsCustom, Converter={StaticResource BoolToVis}}"/>
+                        <TextBox Grid.Row="1" Style="{StaticResource CellBox}" FontSize="16" h:FitText.Enabled="True" h:FitText.MinSize="9"
+                                 Text="{Binding QtyText, UpdateSourceTrigger=PropertyChanged}" Validation.ErrorTemplate="{x:Null}"/>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Grid>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
@@ -64,9 +80,9 @@
       <!-- total beside the sizes -->
       <Border Grid.Column="1" Grid.RowSpan="2" Background="{DynamicResource AccentBrush}" CornerRadius="0,9,9,0">
         <StackPanel VerticalAlignment="Center">
-          <TextBlock Text="TOTAL" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#1E1E1E"/>
+          <TextBlock Text="TOTAL" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" Foreground="{DynamicResource OnAccentBrush}"/>
           <Viewbox StretchDirection="DownOnly" Margin="4,0">
-            <TextBlock Text="{Binding TotalQuantity}" FontSize="26" FontWeight="ExtraBold" HorizontalAlignment="Center" Foreground="#1E1E1E"/>
+            <TextBlock Text="{Binding TotalQuantity}" FontSize="26" FontWeight="ExtraBold" HorizontalAlignment="Center" Foreground="{DynamicResource OnAccentBrush}"/>
           </Viewbox>
         </StackPanel>
       </Border>

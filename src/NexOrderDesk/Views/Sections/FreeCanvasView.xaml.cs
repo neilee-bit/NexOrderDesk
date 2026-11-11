@@ -445,14 +445,17 @@ public partial class FreeCanvasView : UserControl
         var c = crop ?? CanvasItem.FullCrop;
         if (Doc == null) return;
         var size = SurfaceSize;
+        var list = images.ToList();
+        // a single picture on an empty area fills the whole area (front / back image, Flags / DTF workspace)
+        bool single = Doc.Items.Count == 0 && list.Count == 1;
         CanvasItem? last = null;
         int i = 0;
-        foreach (var src in images)
+        foreach (var src in list)
         {
             double iw = Math.Max(1, src.Width * c.Width), ih = Math.Max(1, src.Height * c.Height), r = ih / iw;
             double w, h;
             Point p;
-            if (Compact && Doc.Items.Count == 0)
+            if (single || (Compact && Doc.Items.Count == 0))
             {
                 // picture card: the first picture fills the card (like before), centred
                 w = size.Width * 0.96; if (w * r > size.Height * 0.96) w = size.Height * 0.96 / r;
@@ -474,6 +477,24 @@ public partial class FreeCanvasView : UserControl
             i++;
         }
         if (last != null) { Select(last); SetActive(); Surface.Focus(); }
+        // the area was not laid out yet (sheet just opened): fit the single picture again once its real size is known
+        if (single && last != null && (Surface.ActualWidth < 1 || Surface.ActualHeight < 1))
+        {
+            var item = last;
+            Dispatcher.BeginInvoke(new Action(() => FitToArea(item)), DispatcherPriority.Loaded);
+        }
+    }
+
+    /// <summary>Scales a picture to fill the area (keeping its proportions) and centres it.</summary>
+    public void FitToArea(CanvasItem it)
+    {
+        if (Doc == null || !Doc.Items.Contains(it) || it.IsText) return;
+        var size = SurfaceSize;
+        double r = it.AspectRatio;
+        double w = size.Width * 0.96; if (w * r > size.Height * 0.96) w = size.Height * 0.96 / r;
+        double h = w * r;
+        it.W = w; it.H = h;
+        it.X = (size.Width - w) / 2; it.Y = (size.Height - h) / 2;
     }
 
     /// <summary>Ctrl+V: pictures first (files, PNG, bitmap), otherwise the clipboard text becomes a new movable text box.</summary>

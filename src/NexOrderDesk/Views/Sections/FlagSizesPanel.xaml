@@ -13,6 +13,7 @@
             <Trigger Property="IsChecked" Value="True">
               <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBrush}"/>
               <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentDarkBrush}"/>
+              <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}"/>
             </Trigger>
             <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="#6B7280"/></Trigger>
           </ControlTemplate.Triggers>
@@ -59,7 +60,7 @@
           <Button HorizontalAlignment="Left" Style="{StaticResource ActionButton}" Height="18" FontSize="10" Padding="8,0" Content="+ Add size"
                   Command="{Binding AddFlagSizeCommand}" ToolTip="Add another flag size (up to 10)"
                   Visibility="{Binding IsEditable, Converter={StaticResource BoolToVis}}"/>
-          <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" FontWeight="ExtraBold" Foreground="#1E1E1E">
+          <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" FontWeight="ExtraBold" Foreground="{DynamicResource OnAccentBrush}">
             <Run Text="Total flags:  "/><Run Text="{Binding FlagTotal, Mode=OneWay}"/>
           </TextBlock>
         </Grid>
