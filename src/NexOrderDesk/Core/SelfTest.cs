@@ -458,8 +458,15 @@ public static class SelfTest
     private static void ClipRun(SettingsService s, OrderTypeDef t, string tag)
     {
         var o = new OrderViewModel(t, s, 9700) { OrderName = "SELFTEST CLIP" };
+        if (o.IsFlags && tag.Length > 0)
+        {
+            o.FlagSizes[0].WidthText = "3"; o.FlagSizes[0].HeightText = "5"; o.FlagSizes[0].Quantity = 25;
+            o.FlagSizes[1].WidthText = "2"; o.FlagSizes[1].HeightText = "3"; o.FlagSizes[1].Quantity = 10; o.FlagSizes[1].IsDoubleSided = true;
+            o.AddMaterialCommand.Execute(null);
+        }
         var live = Host(o);
         if (tag.Length > 0) Shot(live, t.Name);
+        if (o.IsFlags && tag.Length > 0) FlagsLayout(o, live);
         var c = Clipped(live);
         Check($"{t.Name}{tag}: nothing cut off while editing", c.Count == 0, string.Join("; ", c.Take(6)));
         if (tag.Length > 0 && o.IsGarment) SelectionRun(o, live, t.Name);
@@ -468,7 +475,7 @@ public static class SelfTest
         c = Clipped(live);
         Check($"{t.Name}{tag}: nothing cut off after Submit", c.Count == 0, string.Join("; ", c.Take(6)));
         var printed = Render(o);
-        if (tag.Length > 0 && t.Id is "tshirt" or "cutprint" or "bottoms") Shot(printed, t.Name + " Submitted");
+        if (tag.Length > 0 && t.Id is "tshirt" or "cutprint" or "bottoms" or "flags") Shot(printed, t.Name + " Submitted");
         c = Clipped(printed);
         Check($"{t.Name}{tag}: nothing cut off in print / PDF", c.Count == 0, string.Join("; ", c.Take(6)));
         Close(live, o);
@@ -503,27 +510,51 @@ public static class SelfTest
         o.EditCommand.Execute(null); Pump();
     }
 
+    /// <summary>2.9.1 flags: material on top, compact sizes column on the right, big material name and size numbers.</summary>
+    private static void FlagsLayout(OrderViewModel o, FrameworkElement live)
+    {
+        var bar = FindAll<MaterialColorBar>(live).FirstOrDefault(IsShown);
+        var sizes = FindAll<FlagSizesPanel>(live).FirstOrDefault(IsShown);
+        var art = FindAll<FreeCanvasView>(live).FirstOrDefault(IsShown);
+        if (bar == null || sizes == null || art == null) { Fail("flags: material bar / sizes / artwork missing"); return; }
+        Rect R(FrameworkElement e) => e.TransformToAncestor(live).TransformBounds(new Rect(e.RenderSize));
+        Check("flags: material bar is at the top, above artwork and sizes", R(bar).Bottom <= R(sizes).Top + 1 && R(bar).Bottom <= R(art).Top + 1,
+              $"bar {R(bar)}, sizes {R(sizes)}");
+        Check("flags: sizes column is compact, on the right", R(sizes).Left > R(art).Right && R(sizes).Width < R(art).Width, $"sizes {R(sizes).Width:0}, art {R(art).Width:0}");
+        var names = FindAll<ComboBox>(bar).Where(c => c.Name == "MaterialName" && IsShown(c)).ToList();
+        Check("flags: material name is big and bold", names.Count == 2 && names.All(c => c.FontSize >= 15), string.Join(",", names.Select(c => c.FontSize)));
+        var nums = FindAll<TextBox>(sizes).Where(IsShown).ToList();
+        Check("flags: size numbers are big", nums.Count > 0 && nums.All(b => b.FontSize >= 16), "");
+    }
+
     /// <summary>Picture of the specs + print-type area (left column) for checking the layout by eye (test build only).</summary>
     private static void Shot(FrameworkElement root, string name)
     {
         try
         {
-            var print = FindAll<PrintMethodPanel>(root).FirstOrDefault(IsShown);
-            if (print == null) return;
-            FrameworkElement? top = FindAll<GarmentSpecsPanel>(root).FirstOrDefault(IsShown) as FrameworkElement
+            double k = 1.25; int q = 60;
+            FrameworkElement? print = FindAll<PrintMethodPanel>(root).FirstOrDefault(IsShown);
+            FrameworkElement? top = null;
+            if (print == null)
+            {
+                // flags: material bar + artwork + flag sizes (smaller picture - it is a big area)
+                var flags = FindAll<FlagSizesPanel>(root).FirstOrDefault(IsShown);
+                if (flags == null || VisualTreeHelper.GetParent(flags) is not FrameworkElement g || VisualTreeHelper.GetParent(g) is not FrameworkElement area) return;
+                print = area; k = 0.8; q = 50;
+            }
+            else top = FindAll<GarmentSpecsPanel>(root).FirstOrDefault(IsShown) as FrameworkElement
                                     ?? FindAll<JacketSpecsPanel>(root).FirstOrDefault(IsShown) as FrameworkElement
                                     ?? FindAll<BottomSpecsPanel>(root).FirstOrDefault(IsShown);
             var r1 = print.TransformToAncestor(root).TransformBounds(new Rect(print.RenderSize));
             var r = top == null ? r1 : Rect.Union(r1, top.TransformToAncestor(root).TransformBounds(new Rect(top.RenderSize)));
             r.Inflate(4, 4);
-            double k = 1.25;
             var bmp = new RenderTargetBitmap((int)(root.ActualWidth * k), (int)(root.ActualHeight * k), 96 * k, 96 * k, PixelFormats.Pbgra32);
             var bg = new DrawingVisual();
             using (var dc = bg.RenderOpen()) dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
             bmp.Render(bg); bmp.Render(root);
             var crop = new CroppedBitmap(bmp, new Int32Rect((int)Math.Max(0, r.X * k), (int)Math.Max(0, r.Y * k),
                 (int)Math.Min(r.Width * k, bmp.PixelWidth - Math.Max(0, r.X * k)), (int)Math.Min(r.Height * k, bmp.PixelHeight - Math.Max(0, r.Y * k))));
-            var enc = new JpegBitmapEncoder { QualityLevel = 60 };
+            var enc = new JpegBitmapEncoder { QualityLevel = q };
             enc.Frames.Add(BitmapFrame.Create(crop));
             var dir = Path.Combine(Path.GetTempPath(), "NexOrderDesk_shots");
             Directory.CreateDirectory(dir);

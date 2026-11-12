@@ -89,18 +89,18 @@
         </Grid>
       </Grid>
 
-      <!-- ============ FLAGS: artwork + flag sizes, flag material / colour bar at the bottom ============ -->
+      <!-- ============ FLAGS (2.9.1): flag material / colour on top, artwork left, compact flag sizes column on the right ============ -->
       <Grid Grid.Row="4" Margin="10,0" Visibility="{Binding IsFlags, Converter={StaticResource BoolToVis}}">
-        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="6"/><RowDefinition Height="Auto" MinHeight="34"/></Grid.RowDefinitions>
-        <Grid>
-          <Grid.ColumnDefinitions><ColumnDefinition Width="47*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="53*"/></Grid.ColumnDefinitions>
+        <Grid.RowDefinitions><RowDefinition Height="Auto" MinHeight="34"/><RowDefinition Height="6"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+        <s:MaterialColorBar IsHitTestVisible="{Binding IsEditable}"/>
+        <Grid Grid.Row="2">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="63*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="37*" MinWidth="280"/></Grid.ColumnDefinitions>
           <Border Style="{StaticResource Card}" Padding="6">
             <s:FreeCanvasView Doc="{Binding Workspace}" IsEditable="{Binding IsEditable}"
                               EmptyText="Flag artwork&#x0a;paste (Ctrl+V) or drop the design here&#x0a;add as many pictures and notes as you need"/>
           </Border>
           <s:FlagSizesPanel Grid.Column="2" IsHitTestVisible="{Binding IsEditable}"/>
         </Grid>
-        <s:MaterialColorBar Grid.Row="2" IsHitTestVisible="{Binding IsEditable}"/>
       </Grid>
 
       <!-- ============ DTF: the five order fields above + one big artwork workspace ============ -->
