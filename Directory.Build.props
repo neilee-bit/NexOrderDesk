@@ -7,7 +7,7 @@
        ======================================================================================= -->
   <PropertyGroup>
     <!-- Semantic version MAJOR.MINOR.PATCH (MSI-compatible: max 255.255.65535) -->
-    <Version>2.9.1</Version>
+    <Version>2.9.3</Version>
 
     <!-- GitHub repository that hosts the releases, as  owner/repo  (e.g. promotees/NexOrderDesk).
          Leave OWNER/REPO for local test builds: online updates are then switched off. -->
