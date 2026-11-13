@@ -50,6 +50,7 @@ public static class SelfTest
             Step("bottoms layout"); BottomsLayout(s);
             Step("print method after submit"); PrintMethodSubmitted(s);
             Step("piping after submit"); PipingSubmitted(s);
+            Step("sleeve length"); SleeveLength(s);
             Step("material colours"); Colours(s);
             Step("print and press"); PrintPress(s);
             Step("no cut-off text"); NoClipping(s);
@@ -351,6 +352,29 @@ public static class SelfTest
         Check("print: the button row is removed so the order uses the space", printSizes > liveSizes + 10, $"size table {liveSizes:0} on screen, {printSizes:0} printed");
         Check("material: note printed, empty note and hint left off", pt.Contains("FRONT & BACK") && !pt.Contains("e.g. front & back"), "");
         Close(live, o);
+    }
+
+    /// <summary>2.9.1: sleeve length (Short / Long / Short/Long) in front of the sleeve type, on the sheet and after submit.</summary>
+    private static void SleeveLength(SettingsService s)
+    {
+        foreach (var id in new[] { "tshirt", "cutprint" })
+        {
+            var type = s.OrderTypes.FirstOrDefault(t => t.Id == id);
+            if (type == null) { Fail($"{id}: order type missing"); continue; }
+            var o = new OrderViewModel(type, s, 9810) { OrderName = "SELFTEST SLEEVE" };
+            o.AdultShort.First(e => e.Label == "M").Quantity = 2;
+            var live = Host(o);
+            var box = Find<ComboBox>(live, "SleeveLengthBox");
+            bool shown = box != null && IsShown(box);
+            if (id == "cutprint") { Check("cutprint: sleeve length not on the short spec list", !shown, ""); Close(live, o); continue; }
+            Check($"{id}: sleeve length box in front of the sleeve type", shown && box!.Items.Cast<string>().SequenceEqual(new[] { "Short", "Long", "Short/Long" })
+                  && (string)box.SelectedItem == "Short", "");
+            o.SleeveLength = "Short/Long"; o.SubmitCommand.Execute(null); Pump(); Pump();
+            var printed = Render(o);
+            Check($"{id}: chosen sleeve length on the submitted sheet", ComboText(printed, "SleeveLengthBox") == "Short/Long" && Clipped(printed).Count == 0,
+                  string.Join("; ", Clipped(printed).Take(3)));
+            Close(live, o);
+        }
     }
 
     /// <summary>2.9.1: Piping only on the submitted sheet when ticked (every tops layout).</summary>

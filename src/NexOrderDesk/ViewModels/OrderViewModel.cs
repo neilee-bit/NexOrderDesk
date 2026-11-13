@@ -244,6 +244,10 @@ public class OrderViewModel : ObservableObject
     public string NeckType { get => _neck; set { if (value != null) Set(ref _neck, value); } }
     public string CollarColor { get => _collarColor; set => Set(ref _collarColor, value ?? ""); }
     public string SleeveType { get => _sleeve; set { if (value != null) Set(ref _sleeve, value); } }
+    /// <summary>2.9.1: sleeve length, chosen in front of the sleeve type (Short, Long or Short/Long).</summary>
+    public static IReadOnlyList<string> SleeveLengths { get; } = new[] { "Short", "Long", "Short/Long" };
+    private string _sleeveLength = "Short";
+    public string SleeveLength { get => _sleeveLength; set { if (value != null) Set(ref _sleeveLength, value); } }
     // Placket Type & Color / Button & Button Color: free text, starting as "T-shirts match" (replaced when the user types,
     // can be edited or cleared; what is in the box is exactly what prints).
     private string _placketText = DefaultOptions.MatchText, _buttonText = DefaultOptions.MatchText;

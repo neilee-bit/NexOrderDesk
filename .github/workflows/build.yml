@@ -139,27 +139,27 @@ jobs:
           if ($p.ExitCode -ne 0) { Write-Host "::error title=Self-test failed (exit $($p.ExitCode))::$body"; exit 1 }
           Write-Host "::notice title=Self-test passed::$body"
 
-      - name: Layout picture FLAGS
+      - name: Layout picture TShirtOrder
         if: always()
         shell: pwsh
         run: |
-          $f = Join-Path $env:TEMP 'NexOrderDesk_shots\FLAGS.jpg'
+          $f = Join-Path $env:TEMP 'NexOrderDesk_shots\TShirtOrder.jpg'
           if (Test-Path $f) {
             $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($f))
             $n = [Math]::Ceiling($b64.Length / 4000)
-            if ($n -le 10) { for ($i = 0; $i -lt $n; $i++) { Write-Host "::notice title=shot FLAGS $($i+1)/$n::$($b64.Substring($i * 4000, [Math]::Min(4000, $b64.Length - $i * 4000)))" } }
+            if ($n -le 10) { for ($i = 0; $i -lt $n; $i++) { Write-Host "::notice title=shot TShirtOrder $($i+1)/$n::$($b64.Substring($i * 4000, [Math]::Min(4000, $b64.Length - $i * 4000)))" } }
             else { Write-Host "picture too big ($($b64.Length))" }
           }
 
-      - name: Layout picture FLAGSSubmitted
+      - name: Layout picture TShirtOrderSubmitted
         if: always()
         shell: pwsh
         run: |
-          $f = Join-Path $env:TEMP 'NexOrderDesk_shots\FLAGSSubmitted.jpg'
+          $f = Join-Path $env:TEMP 'NexOrderDesk_shots\TShirtOrderSubmitted.jpg'
           if (Test-Path $f) {
             $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($f))
             $n = [Math]::Ceiling($b64.Length / 4000)
-            if ($n -le 10) { for ($i = 0; $i -lt $n; $i++) { Write-Host "::notice title=shot FLAGSSubmitted $($i+1)/$n::$($b64.Substring($i * 4000, [Math]::Min(4000, $b64.Length - $i * 4000)))" } }
+            if ($n -le 10) { for ($i = 0; $i -lt $n; $i++) { Write-Host "::notice title=shot TShirtOrderSubmitted $($i+1)/$n::$($b64.Substring($i * 4000, [Math]::Min(4000, $b64.Length - $i * 4000)))" } }
             else { Write-Host "picture too big ($($b64.Length))" }
           }
 
